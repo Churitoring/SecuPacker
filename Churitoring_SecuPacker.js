@@ -6255,7 +6255,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.0.0';
+    var PLUGIN_VERSION = '1.0.1';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -7752,7 +7752,6 @@ freely, subject to the following restrictions:
                     try {
                         var _licPath = resolveLicensesFilePath(projectPath);
                         fs.writeFileSync(_licPath, _libLicensesText, 'utf8');
-                        logInfo('License file written: ' + path.basename(_licPath));
                     } catch (e) { logWarn('licenseFileWrite', e); }
                 }
 
