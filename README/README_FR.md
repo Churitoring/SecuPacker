@@ -13,7 +13,7 @@ Un plugin de compression sécurisée des ressources pour RPG Maker MV / MZ.
 ---
 
 ## Table des matières
-<img src="../image/example.png" alt="Example Image" width="250" align="right" />
+<img src="../image/example.png" alt="Example Image" width="300" align="right" />
 
 1. [Comment utiliser](#1-comment-utiliser)
 2. [Prérequis](#2-prérequis)

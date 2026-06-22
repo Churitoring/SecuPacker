@@ -13,7 +13,7 @@ RPG Maker MV / MZ用リソースセキュリティパックプラグインです
 ---
 
 ## 目次
-<img src="../image/example.png" alt="Example Image" width="250" align="right" />
+<img src="../image/example.png" alt="Example Image" width="300" align="right" />
 
 1. [使い方](#1-使い方)
 2. [動作環境](#2-動作環境)

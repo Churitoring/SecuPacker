@@ -13,7 +13,7 @@ Wtyczka do bezpiecznego pakowania zasobów dla RPG Maker MV / MZ.
 ---
 
 ## Spis treści
-<img src="../image/example.png" alt="Example Image" width="250" align="right" />
+<img src="../image/example.png" alt="Example Image" width="300" align="right" />
 
 1. [Jak używać](#1-jak-używać)
 2. [Wymagania](#2-wymagania)

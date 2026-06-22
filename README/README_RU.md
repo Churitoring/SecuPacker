@@ -13,7 +13,7 @@
 ---
 
 ## Содержание
-<img src="../image/example.png" alt="Example Image" width="250" align="right" />
+<img src="../image/example.png" alt="Example Image" width="300" align="right" />
 
 1. [Как использовать](#1-как-использовать)
 2. [Требования](#2-требования)

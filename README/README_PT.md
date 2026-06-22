@@ -13,7 +13,7 @@ Um plugin de empacotamento de segurança de recursos para RPG Maker MV / MZ.
 ---
 
 ## Índice
-<img src="../image/example.png" alt="Example Image" width="250" align="right" />
+<img src="../image/example.png" alt="Example Image" width="300" align="right" />
 
 1. [Como usar](#1-como-usar)
 2. [Requisitos](#2-requisitos)
