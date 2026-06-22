@@ -13,6 +13,7 @@ Ein Ressourcen-Sicherheits-Pack-Plugin für RPG Maker MV / MZ.
 ---
 
 ## Inhaltsverzeichnis
+<img src="../image/example.png" alt="Example Image" width="250" align="right" />
 
 1. [Verwendung](#1-verwendung)
 2. [Systemanforderungen](#2-systemanforderungen)

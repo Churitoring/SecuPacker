@@ -13,6 +13,7 @@
 ---
 
 ## 目录
+<img src="../image/example.png" alt="Example Image" width="250" align="right" />
 
 1. [使用方法](#1-使用方法)
 2. [系统要求](#2-系统要求)

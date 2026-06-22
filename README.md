@@ -13,6 +13,7 @@ A resource security packing plugin for RPG Maker MV / MZ.
 ---
 
 ## Table of Contents
+<img src="image/example.png" alt="Example Image" width="250" align="right" />
 
 1. [How to Use](#1-how-to-use)
 2. [Requirements](#2-requirements)

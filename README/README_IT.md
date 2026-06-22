@@ -13,6 +13,7 @@ Plugin di sicurezza per il confezionamento di risorse per RPG Maker MV / MZ.
 ---
 
 ## Indice
+<img src="../image/example.png" alt="Example Image" width="250" align="right" />
 
 1. [Come si usa](#1-come-si-usa)
 2. [Requisiti](#2-requisiti)

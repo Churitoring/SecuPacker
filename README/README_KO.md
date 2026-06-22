@@ -13,6 +13,7 @@ RPG Maker MV / MZ용 리소스 보안 패킹 플러그인입니다.
 ---
 
 ## 목차
+<img src="../image/example.png" alt="Example Image" width="250" align="right" />
 
 1. [사용 방법](#1-사용-방법)
 2. [요구 사항](#2-요구-사항)
