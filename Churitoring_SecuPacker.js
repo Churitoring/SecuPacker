@@ -508,6 +508,8 @@ freely, subject to the following restrictions:
  * 4. Once packing finishes, the game will close on its own.
  * 5. The deployed folder is now ready to distribute.
  * 
+ * Warning: If you have made any direct modifications to this file, you must set 'Packer Auto Update' to 'false' — otherwise your changes will be reverted every time you pack.
+ * 
  * --- JavaScript API ---
  * The following APIs are available via SecuPacker.
  * 
@@ -1023,6 +1025,8 @@ freely, subject to the following restrictions:
  *    （進行画面が表示されます。ウィンドウを閉じないでください。）
  * 4. パックが完了すると、ゲームは自動的に終了します。
  * 5. これで出力フォルダの配布準備が整いました。
+ * 
+ * 注意：このファイルを直接変更した場合は、必ず'Packer Auto Update'を'false'に設定してください。
  * 
  * --- JavaScript API ---
  * 以下の API は SecuPacker を通じて利用可能です。
@@ -1540,6 +1544,8 @@ freely, subject to the following restrictions:
  * 4. 패킹이 완료되면 게임이 자동으로 종료됩니다.
  * 5. 이제 추출된 폴더를 그대로 배포하시면 됩니다.
  * 
+ * 주의: 이 파일을 직접 수정한 내용이 있다면 반드시 'Packer Auto Update'를 'false'로 바꿔야 합니다.
+ * 
  * --- JavaScript API ---
  * 다음 API는 SecuPacker를 통해 사용할 수 있습니다.
  * 
@@ -2055,6 +2061,8 @@ freely, subject to the following restrictions:
  *    (Ein Fortschrittsbildschirm wird angezeigt; das Fenster nicht schließen.)
  * 4. Nach Abschluss beendet sich das Spiel automatisch.
  * 5. Der exportierte Ordner ist nun bereit zur Verteilung.
+ * 
+ * Warnung: Wenn Sie diese Datei direkt modifiziert haben, müssen Sie 'Packer Auto-Update' auf 'false' setzen – andernfalls werden Ihre Änderungen bei jedem Packvorgang rückgängig gemacht.
  * 
  * --- JavaScript-API ---
  * Die folgenden APIs sind über SecuPacker verfügbar.
@@ -2572,6 +2580,8 @@ freely, subject to the following restrictions:
  * 4. Cuando termine, el juego se cerrará solo.
  * 5. La carpeta exportada ya está lista para distribuir.
  * 
+ * Advertencia: Si has realizado modificaciones directas en este archivo, debes establecer 'Packer Auto Update' en 'false' — de lo contrario, tus cambios serán revertidos cada vez que empaquetes.
+ * 
  * --- API de JavaScript ---
  * Las siguientes APIs están disponibles a través de SecuPacker.
  * 
@@ -3087,6 +3097,8 @@ freely, subject to the following restrictions:
  *    (Un écran de progression s'affiche ; ne fermez pas la fenêtre.)
  * 4. Une fois terminé, le jeu se fermera de lui-même.
  * 5. Le dossier exporté est maintenant prêt à être distribué.
+ * 
+ * Avertissement : Si vous avez apporté des modifications directes à ce fichier, vous devez définir 'Packer Auto Update' sur 'false' — sinon vos modifications seront annulées à chaque compression.
  * 
  * --- API JavaScript ---
  * Les APIs suivantes sont disponibles via SecuPacker.
@@ -3604,6 +3616,8 @@ freely, subject to the following restrictions:
  * 4. Al termine, il gioco si chiuderà da solo.
  * 5. La cartella esportata è ora pronta per la distribuzione.
  * 
+ * Avvertenza: Se hai apportato modifiche dirette a questo file, devi impostare 'Aggiornamento automatico Packer' su 'false' — altrimenti le tue modifiche verranno ripristinate ogni volta che comprimi.
+ * 
  * --- API JavaScript ---
  * Le seguenti API sono disponibili tramite SecuPacker.
  * 
@@ -4119,6 +4133,8 @@ freely, subject to the following restrictions:
  *    (Uma tela de progresso será exibida; não feche a janela.)
  * 4. Ao concluir, o jogo se fechará sozinho.
  * 5. A pasta exportada está pronta para distribuição.
+ * 
+ * Aviso: Se você fez modificações diretas neste arquivo, defina 'Packer Auto Update' como 'false' — caso contrário, suas alterações serão revertidas toda vez que você empacotar.
  * 
  * --- API JavaScript ---
  * As APIs a seguir estão disponíveis via SecuPacker.
@@ -4636,6 +4652,8 @@ freely, subject to the following restrictions:
  * 4. По завершении игра закроется сама.
  * 5. Папка экспорта готова к распространению.
  * 
+ * Предупреждение: Если вы вносили какие-либо прямые изменения в этот файл, необходимо установить для 'Packer Auto Update' значение 'false' — иначе ваши изменения будут отменяться при каждой упаковке.
+ * 
  * --- JavaScript API ---
  * Следующие API доступны через SecuPacker.
  * 
@@ -5151,6 +5169,8 @@ freely, subject to the following restrictions:
  *    （会显示进度画面，请不要关闭窗口。）
  * 4. 打包完成后，游戏会自动关闭。
  * 5. 导出的文件夹现在可以直接分发了。
+ * 
+ * 警告：如果您对该文件进行了直接修改，必须将 'Packer Auto Update' 设置为 'false'——否则每次打包时您的修改都会被还原。
  * 
  * --- JavaScript API ---
  * 以下 API 可通过 SecuPacker 调用。
@@ -5668,6 +5688,8 @@ freely, subject to the following restrictions:
  * 4. 打包完成後，遊戲會自動關閉。
  * 5. 匯出的資料夾現在可以直接發佈了。
  * 
+ * 警告：如果您對該檔案進行了直接修改，必須將 'Packer Auto Update' 設定為 'false'——否則每次封包時您的修改都會被還原。
+ * 
  * --- JavaScript API ---
  * 以下 API 可透過 SecuPacker 呼叫。
  * 
@@ -6181,6 +6203,8 @@ freely, subject to the following restrictions:
  * 4. Po zakończeniu gra zamknie się automatycznie.
  * 5. Wyeksportowany folder jest gotowy do dystrybucji.
  * 
+ * Ostrzeżenie: Jeśli dokonałeś bezpośrednich modyfikacji w tym pliku, musisz ustawić 'Autoupdate Packera' na 'false' — w przeciwnym razie Twoje zmiany zostaną cofnięte przy każdym pakowaniu.
+ * 
  * --- API JavaScript ---
  * Poniższe API są dostępne przez SecuPacker.
  * 
@@ -6221,6 +6245,7 @@ freely, subject to the following restrictions:
 
 // ===========================================================================
 // #region Packer
+// If you have made any direct modifications to this file, you must set 'Packer Auto Update' to 'false' — otherwise your changes will be reverted every time you pack.
 // ===========================================================================
 (function () {
     // =========================================================================
@@ -6243,7 +6268,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.1.0';
+    var PLUGIN_VERSION = '1.1.1';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -6350,7 +6375,6 @@ freely, subject to the following restrictions:
      * @param {string} filePath - Absolute path to the file
      */
     function stripHiddenAttr(filePath) {
-        if (process.platform !== 'win32') return;
         try {
             if (!fs.existsSync(filePath)) return;
             child_process.execSync('attrib -H "' + filePath + '"', { windowsHide: true, timeout: 5000 });
@@ -6625,6 +6649,7 @@ freely, subject to the following restrictions:
         // [PLAYTEST] Non-fatal version warning — log only, do not block
         (function () {
             try {
+                logInfo('SecuPacker is enabled. You must run the deployed game once and wait for it to fully load before distribution. Failure to do this will result in no security protection from SecuPacker.');
                 var currentVer = (process.versions && process.versions['nw']) || '';
                 if (!currentVer || !isNwjsVersionAtLeast(currentVer, NWJS_MIN_VERSION)) {
                     logError(
@@ -6638,6 +6663,16 @@ freely, subject to the following restrictions:
 
     function ensureSafeMode() {
         if (!fs.existsSync(pluginsPath)) return;
+
+        // [PLATFORM CHECK] Windows only
+        if (process.platform !== 'win32') {
+            alert(
+                '[' + PLUGIN_NAME + '] This plugin is only supported on Windows.\n\n' +
+                'The game will now exit.'
+            );
+            process.exit(0);
+            return;
+        }
 
         // [PROJECT FILE CHECK] Abort if *.rpgproject or *.rmmzproject exists in the pack directory.
         // These files indicate the project is still in editor mode, not a deployable build.
@@ -6696,7 +6731,7 @@ freely, subject to the following restrictions:
             myConfig.status = true;
             isRebooting = true;
 
-            // [PackER AUTO-UPDATE] Check for Packer plugin update before packaging
+            // [Packer AUTO-UPDATE] Check for Packer plugin update before packaging
             var autoUpdate = (myConfig.parameters['Packer Auto Update'] || 'true') === 'true';
 
             var proceedToSafeMode = function () {
@@ -11672,6 +11707,7 @@ _b=null;\
 
 // ===========================================================================
 // #region Loader
+// If you have made any direct modifications to this file, you must set 'Packer Auto Update' to 'false' — otherwise your changes will be reverted every time you pack.
 // ===========================================================================
 function Loader() {
     (function () {
