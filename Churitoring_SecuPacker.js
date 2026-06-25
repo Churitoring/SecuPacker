@@ -494,7 +494,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * NW.js minimum version: 0.28.1
- * NW.js recommended version: 0.44.3 or higher
  * RPG MAKER MV minimum version: 1.6.0
  * RPG MAKER MZ minimum version: 1.0.0
  * 
@@ -1011,7 +1010,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * NW.js 最小バージョン: 0.28.1
- * NW.js 推奨バージョン: 0.44.3 以上
  * RPG MAKER MV 最小バージョン: 1.6.0
  * RPG MAKER MZ 最小バージョン: 1.0.0
  * 
@@ -1528,7 +1526,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * NW.js 최소 요구 버전: 0.28.1
- * NW.js 권장 버전: 0.44.3 이상
  * RPG MAKER MV 최소 요구 버전: 1.6.0
  * RPG MAKER MZ 최소 요구 버전: 1.0.0
  * 
@@ -2045,7 +2042,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * NW.js Mindestversion: 0.28.1
- * NW.js Empfohlene Version: 0.44.3 oder höher
  * RPG MAKER MV Mindestversion: 1.6.0
  * RPG MAKER MZ Mindestversion: 1.0.0
  * 
@@ -2562,7 +2558,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * Versión mínima de NW.js: 0.28.1
- * Versión recomendada de NW.js: 0.44.3 o superior
  * Versión mínima de RPG MAKER MV: 1.6.0
  * Versión mínima de RPG MAKER MZ: 1.0.0
  * 
@@ -3079,7 +3074,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * Version minimale de NW.js : 0.28.1
- * Version recommandée de NW.js : 0.44.3 ou supérieure
  * Version minimale de RPG MAKER MV : 1.6.0
  * Version minimale de RPG MAKER MZ : 1.0.0
  * 
@@ -3596,7 +3590,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * Versione minima di NW.js: 0.28.1
- * Versione consigliata di NW.js: 0.44.3 o superiore
  * Versione minima di RPG MAKER MV: 1.6.0
  * Versione minima di RPG MAKER MZ: 1.0.0
  * 
@@ -4113,7 +4106,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * Versão mínima do NW.js: 0.28.1
- * Versão recomendada do NW.js: 0.44.3 ou superior
  * Versão mínima do RPG MAKER MV: 1.6.0
  * Versão mínima do RPG MAKER MZ: 1.0.0
  * 
@@ -4630,7 +4622,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * Минимальная версия NW.js: 0.28.1
- * Рекомендуемая версия NW.js: 0.44.3 или выше
  * Минимальная версия RPG MAKER MV: 1.6.0
  * Минимальная версия RPG MAKER MZ: 1.0.0
  * 
@@ -5147,7 +5138,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * NW.js 最低版本要求: 0.28.1
- * NW.js 推荐版本: 0.44.3 或更高
  * RPG MAKER MV 最低版本要求: 1.6.0
  * RPG MAKER MZ 最低版本要求: 1.0.0
  * 
@@ -5664,7 +5654,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * NW.js 最低版本要求: 0.28.1
- * NW.js 推薦版本: 0.44.3 或更高
  * RPG MAKER MV 最低版本要求: 1.6.0
  * RPG MAKER MZ 最低版本要求: 1.0.0
  * 
@@ -6178,7 +6167,6 @@ freely, subject to the following restrictions:
  * https://github.com/Churitoring/SecuPacker
  * 
  * Minimalna wersja NW.js: 0.28.1
- * Rekomendowana wersja NW.js: 0.44.3 lub wyższa
  * Minimalna wersja RPG MAKER MV: 1.6.0
  * Minimalna wersja RPG MAKER MZ: 1.0.0
  * 
@@ -6255,7 +6243,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.0.1';
+    var PLUGIN_VERSION = '1.1.0';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -7489,6 +7477,23 @@ freely, subject to the following restrictions:
                 return extractSpecificFiles(sdkZipPath, tempExtractDir);
             })
             .then(function () {
+                // [CREDITS] If credits.html does not already exist in the exe directory,
+                // copy it from the extracted SDK so it can later receive license entries.
+                try {
+                    var _execDir = path.dirname(process.execPath);
+                    var _destCredits = path.join(_execDir, 'credits.html');
+                    if (!fs.existsSync(_destCredits)) {
+                        var _srcCredits = path.join(tempExtractDir, 'credits.html');
+                        if (fs.existsSync(_srcCredits)) {
+                            fs.writeFileSync(_destCredits, fs.readFileSync(_srcCredits));
+                            logInfo('credits.html copied from SDK extract to exe directory.');
+                        } else {
+                            logWarn('creditsHtmlCopy', 'credits.html not found in SDK extract.');
+                        }
+                    }
+                } catch (e) { logWarn('creditsHtmlCopy', e); }
+            })
+            .then(function () {
                 return waitForFile(tempExtractDir, 'nwjc.exe', 30, updateUI);
             })
             .then(function (foundPath) {
@@ -7740,20 +7745,19 @@ freely, subject to the following restrictions:
                 updateUI("PHASE 11: CLEANUP", "Erasing Footprints...");
                 var _splitBinNames = splitRules.map(function (r) { return r.binName; });
 
-                // [LICENSE NOTICE] Collect license headers from js/libs BEFORE
-                // performAggressiveCleanup deletes the js/ directory.
-                var _libLicensesText = collectLibLicenses(libsDir);
+                // [LICENSE NOTICE] Collect license headers from js/libs and immediately
+                // append them to credits.html — both must happen BEFORE
+                try {
+                    var _libLicensesText = collectLibLicenses(libsDir);
+                    if (_libLicensesText) {
+                        var _execDir = path.dirname(process.execPath);
+                        var _creditsPath = path.join(_execDir, 'credits.html');
+                        var _licHtml = convertLicensesToHtml(_libLicensesText);
+                        if (_licHtml) appendLicensesToCreditsHtml(_creditsPath, _licHtml);
+                    }
+                } catch (e) { logWarn('licenseAppend', e); }
 
                 performAggressiveCleanup(projectPath, tempFilesRegistry, hashExeFiles, _pau_binName, runtimeWriteRelPaths, projectPath, stripReadOnlyAttrs, _splitBinNames);
-
-                // [LICENSE NOTICE] Write LICENSES.txt (or LICENSES (N).txt) to
-                // the project root after cleanup, alongside the game binary.
-                if (_libLicensesText) {
-                    try {
-                        var _licPath = resolveLicensesFilePath(projectPath);
-                        fs.writeFileSync(_licPath, _libLicensesText, 'utf8');
-                    } catch (e) { logWarn('licenseFileWrite', e); }
-                }
 
                 // [Security] Zeroize env-bound key — no longer needed after cleanup
                 if (envBoundKeyBuf) { envBoundKeyBuf.fill(0); envBoundKeyBuf = null; }
@@ -11148,17 +11152,147 @@ _b=null;\
     }
 
     // =========================================================================
-    // [LICENSE NOTICE] Returns the first non-existing path in the sequence:
-    //   LICENSES.txt -> LICENSES (1).txt -> LICENSES (2).txt -> ...
+    // [LICENSE NOTICE] Strips JS comment syntax from a raw comment block so
+    // that only the plain license text remains.
+    //
+    // Handles all three forms produced by extractLeadingLicenseComments():
+    //   /* ... */  /*! ... */  — removes delimiters and leading " * " per line
+    //   // ...                 — removes the "//" prefix per line
+    //
+    // Multiple comment blocks separated by blank lines are processed in one
+    // pass; blank lines between blocks are preserved.
     // =========================================================================
-    function resolveLicensesFilePath(dir) {
-        var base = path.join(dir, 'LICENSES.txt');
-        if (!fs.existsSync(base)) return base;
-        for (var i = 1; i < 1000; i++) {
-            var candidate = path.join(dir, 'LICENSES (' + i + ').txt');
-            if (!fs.existsSync(candidate)) return candidate;
+    function stripCommentMarkers(text) {
+        // Block comments: /* ... */ and /*! ... */
+        text = text.replace(/\/\*!?([\s\S]*?)\*\//g, function (_, inner) {
+            var lines = inner.split('\n');
+
+            // Remove " * " / " *" style prefix (all whitespace after the asterisk,
+            // not just one character, to handle "  *  text" patterns).
+            lines = lines.map(function (line) {
+                return line.replace(/^[ \t]*\*[ \t]*/, '');
+            });
+
+            // Dedent: find the minimum leading-whitespace width among non-empty
+            // lines, then strip that many characters from every line.
+            // This handles comments that indent their content without using " * "
+            // prefixes (e.g. the localForage style).
+            var minIndent = Infinity;
+            lines.forEach(function (line) {
+                if (line.trim().length > 0) {
+                    var indent = line.match(/^([ \t]*)/)[1].length;
+                    if (indent < minIndent) minIndent = indent;
+                }
+            });
+            if (!isFinite(minIndent)) minIndent = 0;
+
+            if (minIndent > 0) {
+                lines = lines.map(function (line) { return line.slice(minIndent); });
+            }
+
+            return lines.join('\n');
+        });
+
+        // Single-line comments: optional indentation + "//" + optional space
+        text = text.replace(/^[ \t]*\/\/[ \t]?/gm, '');
+
+        return text.trim();
+    }
+
+    // =========================================================================
+    // [LICENSE NOTICE] Converts the plain-text output of collectLibLicenses()
+    // into a sequence of <div class="product"> blocks matching the format used
+    // by the NW.js credits.html file.
+    //
+    // Input format (from collectLibLicenses):
+    //   SEP\nFile: js/libs/xxx.js\nSEP\n<comment block>\n\n  (repeated)
+    //
+    // Output: raw HTML string ready to be injected into credits.html,
+    //         or null when no entries were found.
+    // =========================================================================
+    function convertLicensesToHtml(licensesText) {
+        if (!licensesText) return null;
+
+        var SEP = '------------------------------------------------------------------------';
+        var html = '';
+        var idCounter = 9000; // High IDs to avoid collision with existing credits.html entries
+
+        // Split on the separator line. The resulting array has the shape:
+        //   [0] empty  [1] '\nFile: js/libs/a.js\n'  [2] '\ncontent\n\n'
+        //   [3] '\nFile: js/libs/b.js\n'  [4] '\ncontent\n'  ...
+        var parts = licensesText.split(SEP);
+
+        for (var i = 1; i + 1 < parts.length; i += 2) {
+            var filenamePart = parts[i].replace(/^\n|\n$/g, '').trim();
+            var contentPart = parts[i + 1].replace(/^\n/, '').replace(/\n+$/, '');
+
+            if (filenamePart.indexOf('File: js/libs/') !== 0) continue;
+
+            var filename = filenamePart.slice('File: js/libs/'.length).trim();
+            if (!filename) continue;
+
+            // Strip comment markers, then HTML-escape for safe embedding inside <pre>
+            var plain = stripCommentMarkers(contentPart);
+            var escaped = plain
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            html += `
+<div class="product">
+    <span class="title">${filename}</span>
+    <input type="checkbox" hidden id="${idCounter}">
+    <label class="show" for="${idCounter}" tabindex="0"></label>
+    <div class="licence">
+        <pre>${escaped}</pre>
+    </div>
+</div>
+`;
+            idCounter++;
         }
-        return base; // unreachable in practice
+
+        return html || null;
+    }
+
+    // =========================================================================
+    // [LICENSE NOTICE] Appends HTML product-entry blocks to credits.html.
+    // Finds the last line that contains only "</div>" and inserts the new
+    // content immediately before it, so the entries land inside the outermost
+    // container div rather than after it.
+    // Falls back to appending at the end of the file if no such line exists.
+    // =========================================================================
+    function appendLicensesToCreditsHtml(creditsPath, htmlToAppend) {
+        if (!htmlToAppend) return;
+        try {
+            var existing = '';
+            try {
+                if (fs.existsSync(creditsPath)) {
+                    existing = fs.readFileSync(creditsPath, 'utf8');
+                }
+            } catch (e) { logWarn('appendLicenses:read', e); }
+
+            var lines = existing.split('\n');
+            var insertIdx = -1;
+            for (var i = lines.length - 1; i >= 0; i--) {
+                if (lines[i].trim() === '</div>') {
+                    insertIdx = i;
+                    break;
+                }
+            }
+
+            var newContent;
+            if (insertIdx !== -1) {
+                lines.splice(insertIdx, 0, htmlToAppend);
+                newContent = lines.join('\n');
+            } else {
+                newContent = existing + (existing.length ? '\n' : '') + htmlToAppend;
+            }
+
+            fs.writeFileSync(creditsPath, newContent, 'utf8');
+            logInfo('License entries appended to credits.html.');
+        } catch (e) {
+            logWarn('appendLicensesToCreditsHtml', e);
+        }
     }
 
     function performAggressiveCleanup(projectPath, tempFiles, hashExeFiles, binName, runtimeWriteRelPaths, resourceBasePath, stripReadOnly, splitBinNames) {

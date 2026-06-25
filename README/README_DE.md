@@ -56,7 +56,7 @@ Hinweis: Wenn `Player Auto Update` auf `true` gesetzt ist, wird das Spiel nach e
 ## 2. Systemanforderungen
 
 - RPG Maker MV 1.6.0 oder höher, oder RPG Maker MZ 1.0.0 oder höher
-- NW.js 0.28.1 oder höher (empfohlen: 0.44.3 oder höher)
+- NW.js 0.28.1 oder höher
 
 ---
 
@@ -308,5 +308,5 @@ In MZ verfügbare Plugin-Befehle.
 
 - **Projektdatei-Schutz**: Wenn eine `*.rpgproject`- oder `*.rmmzproject`-Datei im Deployment-Ordner gefunden wird, behandelt das Plugin ihn als Entwicklungsverzeichnis und bricht das Packen ab. Führen Sie den Packer immer im deploynten Ordner aus, nicht im Entwicklungsprojektordner.
 - **Datenschutz-Warnung**: Absolute Sicherheit existiert nicht. Egal wie sicher ein System ist, jemand könnte es möglicherweise knacken – geben Sie daher niemals persönliche oder sensible Informationen wie IDs, Passwörter oder API-Keys in Ihre Spieldateien ein.
-- **Urheberrechts-Hinweis**: Entfernen Sie nicht die `LICENSE.txt`-Datei im selben Verzeichnis wie die gepackte Datei. Die Verteilung ohne diese Datei kann eine Urheberrechtsverletzung darstellen.
+- **Urheberrechts-Hinweis**: Entfernen Sie nicht `credits.html`. Die Verteilung ohne diese Datei kann eine Urheberrechtsverletzung darstellen.
 - **Schwarzer Bildschirm nach dem Packen**: Wenn das Spiel vor dem Packen im Testlauf normal funktionierte, aber nach dem Packen mit einer Fehlermeldung auf einem schwarzen Bildschirm einfriert, wird dies typischerweise durch einen Fehler in einem in `index.html` (MV) oder `main.js` (MZ) registrierten Skript verursacht. Wenn Sie benutzerdefinierte Skripte hinzugefügt oder registrierte Skripte geändert haben, sind diese die wahrscheinlichsten Ursachen.

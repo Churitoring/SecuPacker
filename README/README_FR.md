@@ -56,7 +56,7 @@ Remarque : Si `Player Auto Update` est défini sur `true`, le jeu se fermera (au
 ## 2. Prérequis
 
 - RPG Maker MV 1.6.0 ou version ultérieure, ou RPG Maker MZ 1.0.0 ou version ultérieure
-- NW.js 0.28.1 ou version ultérieure (recommandé : 0.44.3 ou supérieur)
+- NW.js 0.28.1 ou version ultérieure
 
 ---
 
@@ -308,5 +308,5 @@ Commandes de plugin disponibles dans MZ.
 
 - **Protection des fichiers du projet** : Si un fichier `*.rpgproject` ou `*.rmmzproject` est trouvé dans le dossier de déploiement, le plugin le traitera comme un répertoire de développement et annulera la compression. Exécutez toujours le packer depuis le dossier déployé, et non depuis le dossier de votre projet de développement.
 - **Avertissement de confidentialité** : Aucune sécurité n'est absolue. Quelle que soit la robustesse d'un système, quelqu'un pourra éventuellement trouver un moyen de le contourner — n'incluez donc jamais d'informations personnelles ou sensibles telles que des identifiants, mots de passe ou clés API dans vos fichiers de jeu.
-- **Mention de droits d'auteur** : Ne supprimez pas le fichier `LICENSE.txt` situé dans le même répertoire que le fichier compressé. Le distribuer sans ce fichier peut constituer une violation des droits d'auteur.
+- **Mention de droits d'auteur** : Ne supprimez pas `credits.html`. Le distribuer sans ce fichier peut constituer une violation des droits d'auteur.
 - **Écran noir après la compression** : Si le jeu fonctionnait normalement pendant le test avant la compression mais se bloque sur un écran noir avec un message d'erreur après la compression, cela est généralement causé par une erreur dans un script enregistré dans `index.html` (MV) ou `main.js` (MZ). Si vous avez ajouté des scripts personnalisés ou modifié des scripts enregistrés, ce sont les causes les plus probables.

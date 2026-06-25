@@ -56,7 +56,7 @@ Nota: Si `Player Auto Update` está en `true`, el juego se cerrará (en lugar de
 ## 2. Requisitos
 
 - RPG Maker MV 1.6.0 o posterior, o RPG Maker MZ 1.0.0 o posterior
-- NW.js 0.28.1 o posterior (recomendado: 0.44.3 o posterior)
+- NW.js 0.28.1 o posterior
 
 ---
 
@@ -308,5 +308,5 @@ Comandos de plugin disponibles en MZ.
 
 - **Protección de archivos del proyecto**: Si se encuentra un archivo `*.rpgproject` o `*.rmmzproject` dentro de la carpeta de despliegue, el plugin lo tratará como un directorio de desarrollo y abortará el empaquetado. Ejecuta siempre el empaquetador desde la carpeta desplegada, no desde la carpeta de tu proyecto de desarrollo.
 - **Aviso de privacidad**: Ninguna seguridad es absoluta. Por muy seguro que sea un sistema, alguien puede eventualmente encontrar una forma de pasarlo — así que nunca incluyas información personal o sensible como IDs, contraseñas o claves API en los archivos de tu juego.
-- **Aviso de derechos de autor**: No elimines el archivo `LICENSE.txt` ubicado en el mismo directorio que el archivo empaquetado. Distribuirlo sin él puede constituir una violación de derechos de autor.
+- **Aviso de derechos de autor**: No elimines `credits.html`. Distribuirlo sin él puede constituir una violación de derechos de autor.
 - **Pantalla negra tras el empaquetado**: Si el juego funcionaba con normalidad durante el modo de prueba antes de empaquetar, pero se congela en una pantalla negra con un mensaje de error tras el empaquetado, esto suele deberse a un error en un script registrado en `index.html` (MV) o `main.js` (MZ). Si has añadido scripts personalizados o modificado alguno de los scripts registrados, esos son los candidatos más probables.

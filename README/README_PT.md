@@ -56,7 +56,7 @@ Observação: Se `Player Auto Update` estiver definido como `true`, o jogo será
 ## 2. Requisitos
 
 - RPG Maker MV 1.6.0 ou superior, ou RPG Maker MZ 1.0.0 ou superior
-- NW.js 0.28.1 ou superior (recomendado: 0.44.3 ou superior)
+- NW.js 0.28.1 ou superior
 
 ---
 
@@ -308,5 +308,5 @@ Comandos de plugin disponíveis no MZ.
 
 - **Proteção de arquivos do projeto**: Se um arquivo `*.rpgproject` ou `*.rmmzproject` for encontrado dentro da pasta de deploy, o plugin o tratará como um diretório de desenvolvimento e abortará o empacotamento. Sempre execute o empacotador a partir da pasta de deploy, não da pasta do projeto de desenvolvimento.
 - **Aviso de privacidade**: Nenhuma segurança é absoluta. Por mais seguro que seja um sistema, alguém pode eventualmente encontrar uma forma de superá-lo — portanto, nunca inclua informações pessoais ou sensíveis como IDs, senhas ou chaves de API nos arquivos do seu jogo.
-- **Aviso de direitos autorais**: Não remova o arquivo `LICENSE.txt` localizado no mesmo diretório que o arquivo empacotado. Distribuí-lo sem ele pode constituir uma violação de direitos autorais.
+- **Aviso de direitos autorais**: Não remova `credits.html`. Distribuí-lo sem ele pode constituir uma violação de direitos autorais.
 - **Tela preta após o empacotamento**: Se o jogo funcionava normalmente durante o teste antes do empacotamento, mas trava em uma tela preta com uma mensagem de erro após o empacotamento, isso geralmente é causado por um erro em um script registrado em `index.html` (MV) ou `main.js` (MZ). Se você adicionou scripts personalizados ou modificou algum dos scripts registrados, esses são os candidatos mais prováveis.

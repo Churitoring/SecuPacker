@@ -56,7 +56,7 @@ Uwaga: Jeśli `Autoupdate gracza` jest ustawiony na `true`, gra zamknie się (za
 ## 2. Wymagania
 
 - RPG Maker MV 1.6.0 lub nowszy, albo RPG Maker MZ 1.0.0 lub nowszy
-- NW.js 0.28.1 lub nowszy (zalecane: 0.44.3 lub wyższy)
+- NW.js 0.28.1 lub nowszy
 
 ---
 
@@ -308,5 +308,5 @@ Polecenia wtyczki dostępne w MZ.
 
 - **Ochrona pliku projektu**: Jeśli plik `*.rpgproject` lub `*.rmmzproject` zostanie znaleziony w folderze dystrybucji, wtyczka potraktuje go jako katalog deweloperski i przerwie pakowanie. Zawsze uruchamiaj packer z folderu dystrybucji, nie z folderu projektu deweloperskiego.
 - **Ostrzeżenie o prywatności**: Żadne zabezpieczenie nie jest absolutne. Niezależnie od tego, jak bezpieczny jest system, ktoś może w końcu znaleźć sposób — więc nigdy nie umieszczaj danych osobowych ani poufnych, takich jak identyfikatory, hasła lub klucze API, w plikach gry.
-- **Informacja o prawach autorskich**: Nie usuwaj pliku `LICENSE.txt` znajdującego się w tym samym katalogu co spakowany plik. Dystrybucja bez niego może stanowić naruszenie praw autorskich.
+- **Informacja o prawach autorskich**: Nie usuwaj pliku `credits.html`. Dystrybucja bez niego może stanowić naruszenie praw autorskich.
 - **Czarny ekran po spakowaniu**: Jeśli gra działała normalnie podczas testowania przed spakowaniem, ale zawiesza się na czarnym ekranie z komunikatem o błędzie po spakowaniu, jest to zazwyczaj spowodowane błędem w skrypcie zarejestrowanym w `index.html` (MV) lub `main.js` (MZ). Jeśli dodałeś własne skrypty lub zmodyfikowałeś jakiekolwiek zarejestrowane skrypty, są one najbardziej prawdopodobnymi winowajcami.

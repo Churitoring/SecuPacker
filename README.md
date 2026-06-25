@@ -56,7 +56,7 @@ Note: If `Player Auto Update` is set to `true`, the game will close (instead of 
 ## 2. Requirements
 
 - RPG Maker MV 1.6.0 or later, or RPG Maker MZ 1.0.0 or later
-- NW.js 0.28.1 or later (recommended: 0.44.3 or later)
+- NW.js 0.28.1 or later
 
 ---
 
@@ -308,5 +308,5 @@ Plugin commands available in MZ.
 
 - **Project File Protection**: If a `*.rpgproject` or `*.rmmzproject` file is found inside the deployment folder, the plugin will treat it as a development directory and abort packing. Always run the packer from the deployed folder, not your development project folder.
 - **Privacy Warning**: No security is absolute. No matter how secure a system is, someone may eventually find a way through — so never include personal or sensitive information such as IDs, passwords, or API keys in your game files.
-- **Copyright Notice**: Do not remove the `LICENSE.txt` file located in the same directory as the packed file. Distributing without it may constitute a copyright violation.
+- **Copyright Notice**: Do not remove `credits.html`. Distributing without it may constitute a copyright violation.
 - **Black Screen After Packing**: If the game worked normally during test play before packing but freezes on a black screen with an error message after packing, this is typically caused by an error in a script registered in `index.html` (MV) or `main.js` (MZ). If you have added custom scripts or modified any registered scripts, those are the most likely culprits.
