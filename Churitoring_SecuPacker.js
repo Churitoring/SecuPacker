@@ -6268,7 +6268,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.1.1';
+    var PLUGIN_VERSION = '1.1.2';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -8268,8 +8268,6 @@ freely, subject to the following restrictions:
                 var _execPath = process.execPath;
                 var _execName = path.basename(_execPath);
                 if (!isBinaryHashExcluded(_execName, excludedBinaryHashes)) {
-                    var _execRel = path.relative(binaryScanRoot, _execPath).replace(/\\/g, '/').toLowerCase();
-                    _eh.update(_execRel);
                     _eh.update(fs.readFileSync(_execPath));
                 }
             } catch (e) { logWarn('computePackTimeEnvHash:exe', e); }
@@ -12569,8 +12567,6 @@ function Loader() {
                     var _execPath = process.execPath;
                     var _execName = path.basename(_execPath);
                     if (!_isBinExcluded(_execName)) {
-                        var _execRel = path.relative(_binaryScanRoot, _execPath).replace(/\\/g, '/').toLowerCase();
-                        _eh.update(_execRel);
                         _eh.update(fs.readFileSync(_execPath));
                     }
                 } catch (_ee) { }
