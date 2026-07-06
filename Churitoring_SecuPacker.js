@@ -6268,7 +6268,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.1.2';
+    var PLUGIN_VERSION = '1.1.3';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -6948,8 +6948,8 @@ freely, subject to the following restrictions:
                             $dir=Split-Path $to -Parent;
                             if(!(Test-Path -LiteralPath $dir)){New-Item -ItemType Directory -LiteralPath $dir -Force|Out-Null};
                             Move-Item -LiteralPath $_.FullName -Destination $to -Force -EA 0
-                        };`;
-                    stage2 += "$eSafe=[System.Management.Automation.WildcardPattern]::Escape($e);";
+                        };
+                        $eSafe=[System.Management.Automation.WildcardPattern]::Escape($e);`;
                     if (launchArgs.length > 0) {
                         stage2 += "Start-Process $eSafe -Args @(" + launchArgs.map(function (a) { return "'" + psq(a) + "'"; }).join(',') + ");";
                     } else {
@@ -15109,6 +15109,13 @@ function Loader() {
                     };
                     Scene_PlayerUpdateProgress.prototype.create = function () {
                         Scene_Base.prototype.create.call(this);
+
+                        if (!Graphics.width || !Graphics.height) {
+                            try { Graphics.resize(window.innerWidth, window.innerHeight); } catch (_) { }
+                        }
+                        if (!Graphics.boxWidth) Graphics.boxWidth = Graphics.width;
+                        if (!Graphics.boxHeight) Graphics.boxHeight = Graphics.height;
+
                         var w = Graphics.boxWidth, h = Graphics.boxHeight;
 
                         // ── Background ──────────────────────────────────────
