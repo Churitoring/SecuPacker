@@ -6268,7 +6268,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.1.4';
+    var PLUGIN_VERSION = '1.1.5';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -7064,11 +7064,23 @@ freely, subject to the following restrictions:
         this.addChild(this._backgroundSprite);
     };
 
+    function getUIFontFace() {
+        try {
+            if (typeof $gameSystem !== 'undefined' && $gameSystem &&
+                typeof $gameSystem.mainFontFace === 'function') {
+                return $gameSystem.mainFontFace();
+            }
+        } catch (e) { }
+        return isRPGMakerMZ() ? 'rmmz-mainfont, sans-serif' : 'GameFont';
+    }
+
     Scene_PackProgress.prototype.createLabels = function () {
         var w = Graphics.width; var h = Graphics.height;
+        var uiFont = getUIFontFace();
 
         this._titleSprite = new Sprite();
         this._titleSprite.bitmap = new Bitmap(w, 64);
+        this._titleSprite.bitmap.fontFace = uiFont;
         this._titleSprite.bitmap.fontSize = 48;
         this._titleSprite.bitmap.textColor = '#ffffff';
         this._titleSprite.anchor.x = 0.5; this._titleSprite.anchor.y = 0.5;
@@ -7077,6 +7089,7 @@ freely, subject to the following restrictions:
 
         this._majorLabel = new Sprite();
         this._majorLabel.bitmap = new Bitmap(w, 32);
+        this._majorLabel.bitmap.fontFace = uiFont;
         this._majorLabel.bitmap.fontSize = 24;
         this._majorLabel.bitmap.textColor = '#aaaaaa';
         this._majorLabel.anchor.x = 0.5; this._majorLabel.x = w / 2; this._majorLabel.y = h / 2 + 20;
@@ -7084,6 +7097,7 @@ freely, subject to the following restrictions:
 
         this._minorLabel = new Sprite();
         this._minorLabel.bitmap = new Bitmap(w, 24);
+        this._minorLabel.bitmap.fontFace = uiFont;
         this._minorLabel.bitmap.fontSize = 16;
         this._minorLabel.bitmap.textColor = '#666666';
         this._minorLabel.anchor.x = 0.5; this._minorLabel.x = w / 2; this._minorLabel.y = h / 2 + 60;
@@ -7124,17 +7138,16 @@ freely, subject to the following restrictions:
                 this._minorLabel.bitmap.drawText(this._lastMinor, 0, 0, Graphics.width, 24, 'center');
             }
 
-            if (!this._PackProcessStarted) { // Renamed from _started
+            if (!window.__PackProcessStarted) {
                 // [FLAVOR SWAP] Do not start Pack if a restart is pending (flavor swap in progress)
                 if (isRebooting) {
                     Scene_PackProgress.status = { title: "SecuPacker", major: "Switching to Production Pack...", minor: "Please wait..." };
                     return;
                 }
-                this._PackProcessStarted = true;
+                window.__PackProcessStarted = true;
                 logInfo('Scheduling startPackProcess...');
-                var self = this;
                 setTimeout(function () {
-                    self.startPackProcess();
+                    Scene_PackProgress.prototype.startPackProcess();
                 }, 100);
             }
         } catch (e) {
@@ -7878,14 +7891,14 @@ freely, subject to the following restrictions:
 
         window.addEventListener('load', function () {
             setTimeout(function () {
-                if (typeof SceneManager !== 'undefined' && !SceneManager._scene) {
-                    logInfo('Forcing SceneManager.run because main.js failed to call it!');
-                    try {
-                        SceneManager.run(Scene_PackProgress);
-                    } catch (e) {
-                        logError('Force boot failed:', e);
-                    }
-                }
+                if (typeof SceneManager !== 'undefined' && SceneManager._scene) return;
+                if (window.__PackProcessStarted || (typeof isRebooting !== 'undefined' && isRebooting)) return;
+
+                window.__PackProcessStarted = true;
+                logInfo('Scheduling startPackProcess...');
+                setTimeout(function () {
+                    Scene_PackProgress.prototype.startPackProcess();
+                }, 100);
             }, 1000);
         });
 
@@ -15100,7 +15113,7 @@ function Loader() {
                     function Scene_PlayerUpdateProgress() { this.initialize.apply(this, arguments); }
                     Scene_PlayerUpdateProgress.prototype = Object.create(Scene_Base.prototype);
                     Scene_PlayerUpdateProgress.prototype.constructor = Scene_PlayerUpdateProgress;
-                    Scene_PlayerUpdateProgress.status = { title: _pau_ui_update_text, sub: '' };
+                    Scene_PlayerUpdateProgress.status = { title: '', sub: '' };
                     Scene_PlayerUpdateProgress.prototype.isReady = function () { return true; };
                     Scene_PlayerUpdateProgress.prototype.initialize = function () {
                         Scene_Base.prototype.initialize.call(this);
@@ -15217,11 +15230,25 @@ function Loader() {
                             } catch (_bgmErr) { }
                         }
 
+                        // ── Font ────────────────────────────────────────
+                        function getUIFontFace() {
+                            try {
+                                if (typeof $gameSystem !== 'undefined' && $gameSystem &&
+                                    typeof $gameSystem.mainFontFace === 'function') {
+                                    return $gameSystem.mainFontFace();
+                                }
+                            } catch (e) { }
+                            return isRPGMakerMZ() ? 'rmmz-mainfont, sans-serif' : 'GameFont';
+                        }
+
+                        var uiFont = getUIFontFace();
+
                         // ── Title sprite ────────────────────────────────────────
                         var _titleH = Math.max(64, Math.ceil(_pau_ui_title_size * 2));
                         this._titleBitmapH = _titleH;
                         this._titleSp = new Sprite();
                         this._titleSp.bitmap = new Bitmap(w, _titleH);
+                        this._titleSp.bitmap.fontFace = uiFont;
                         this._titleSp.bitmap.fontSize = _pau_ui_title_size;
                         this._titleSp.bitmap.textColor = _pau_ui_title_color;
                         this._titleSp.bitmap.outlineWidth = _pau_ui_title_outline_width;
@@ -15236,6 +15263,7 @@ function Loader() {
                         this._subBitmapH = _subH;
                         this._subSp = new Sprite();
                         this._subSp.bitmap = new Bitmap(w, _subH);
+                        this._subSp.bitmap.fontFace = uiFont;
                         this._subSp.bitmap.fontSize = _pau_ui_sub_size;
                         this._subSp.bitmap.textColor = _pau_ui_sub_color;
                         this._subSp.bitmap.outlineWidth = _pau_ui_sub_outline_width;
@@ -15332,6 +15360,7 @@ function Loader() {
                             }
 
                             var st = Scene_PlayerUpdateProgress.status;
+                            st.title = _pau_ui_update_text;
 
                             // Redraw title only when text changes
                             if (this._titleSp && this._lastTitle !== st.title) {
@@ -15354,19 +15383,30 @@ function Loader() {
 
                     // ── Block scene transition: hold black screen until check is complete ──
                     var _pau_done = false;
-                    var _pau_pending = null; // { self, fn }
+                    var _pau_isUpdating = false;
+                    var _pau_pending = null;
 
                     function _pau_hookBoot() {
+                        var _origGoto = SceneManager.goto;
+                        SceneManager.goto = function (sceneClass) {
+                            if (_pau_isUpdating && sceneClass && sceneClass !== Scene_PlayerUpdateProgress) {
+                                sceneClass = Scene_PlayerUpdateProgress;
+                            }
+                            _origGoto.call(this, sceneClass);
+                        };
+
                         if (isRPGMakerMZ()) {
                             var _orig = Scene_Boot.prototype.startNormalGame;
                             Scene_Boot.prototype.startNormalGame = function () {
-                                if (_pau_done) { _orig.call(this); }
+                                if (_pau_isUpdating) { SceneManager.goto(Scene_PlayerUpdateProgress); }
+                                else if (_pau_done) { _orig.call(this); }
                                 else { _pau_pending = { self: this, fn: _orig }; }
                             };
                         } else {
                             var _origS = Scene_Boot.prototype.start;
                             Scene_Boot.prototype.start = function () {
-                                if (_pau_done) { _origS.call(this); }
+                                if (_pau_isUpdating) { SceneManager.goto(Scene_PlayerUpdateProgress); }
+                                else if (_pau_done) { _origS.call(this); }
                                 else { _pau_pending = { self: this, fn: _origS }; }
                             };
                         }
@@ -15410,8 +15450,17 @@ function Loader() {
 
                     // ── Download update + restart ───────────────────────
                     function _pau_doUpdate(downloadUrl, expectedHash) {
-                        _pau_done = true; _pau_pending = null;
-                        try { SceneManager.goto(Scene_PlayerUpdateProgress); } catch (_) { }
+                        _pau_done = true; _pau_isUpdating = true;
+
+                        var isPastBoot = false;
+                        try {
+                            isPastBoot = SceneManager._scene && SceneManager._scene.constructor !== Scene_Boot;
+                        } catch (e) { }
+
+                        if (_pau_pending || isPastBoot) {
+                            try { SceneManager.goto(Scene_PlayerUpdateProgress); } catch (_) { }
+                            _pau_pending = null;
+                        }
                         var binInfo = _pau_getBinPath();
                         var binPath = binInfo.path;
                         Scene_PlayerUpdateProgress.status = { title: _pau_ui_update_text, sub: '' };
