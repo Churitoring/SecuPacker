@@ -6268,7 +6268,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.1.3';
+    var PLUGIN_VERSION = '1.1.4';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -7047,6 +7047,11 @@ freely, subject to the following restrictions:
     Scene_PackProgress.prototype.create = function () {
         logInfo('Scene_PackProgress.create called');
         try { Scene_Base.prototype.create.call(this); } catch (e) { }
+        try {
+            if (!Graphics.width || !Graphics.height) Graphics.resize(window.innerWidth, window.innerHeight);
+            if (!Graphics.boxWidth) Graphics.boxWidth = Graphics.width;
+            if (!Graphics.boxHeight) Graphics.boxHeight = Graphics.height;
+        } catch (e) { }
         try { this.createBackground(); } catch (e) { }
         try { this.createLabels(); } catch (e) { }
     };
