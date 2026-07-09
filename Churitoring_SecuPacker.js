@@ -6268,7 +6268,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.1.5';
+    var PLUGIN_VERSION = '1.1.6';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -15485,10 +15485,19 @@ function Loader() {
                                 Scene_PlayerUpdateProgress.status = { title: _pau_ui_complete_text, sub: '' };
                                 setTimeout(function () {
                                     try {
-                                        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.reload)
-                                            chrome.runtime.reload();
-                                        else location.reload();
-                                    } catch (_) { try { process.exit(0); } catch (__) { } }
+                                        var cp = require('child_process');
+                                        var launchArgs = [];
+                                        try {
+                                            if (typeof nw !== 'undefined' && nw.App && Array.isArray(nw.App.argv))
+                                                launchArgs = nw.App.argv;
+                                        } catch (e) { }
+                                        var child = cp.spawn(process.execPath, launchArgs, {
+                                            detached: true,
+                                            stdio: 'ignore'
+                                        });
+                                        child.unref();
+                                    } catch (e) { }
+                                    process.exit(0);
                                 }, 1000);
                             }
                         );
