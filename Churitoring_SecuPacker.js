@@ -6268,7 +6268,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.1.6';
+    var PLUGIN_VERSION = '1.1.7';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -13344,6 +13344,8 @@ function Loader() {
                 try {
                     var key = normalizePath(p);
                     if (resolveVfsKey(key, 'any')) return true;
+                    if (key && typeof __SECU_V8_FILES__ !== 'undefined' && __SECU_V8_FILES__ &&
+                        Object.prototype.hasOwnProperty.call(__SECU_V8_FILES__, key)) return true;
                 } catch (e) { }
                 return _fs_existsSync_ref.fn.apply(this, arguments);
             }, _fs_existsSync_ref);
@@ -13489,6 +13491,63 @@ function Loader() {
                 return out;
             }
 
+            function _usesWithFileTypes(options) {
+                return !!(options && typeof options === 'object' && options.withFileTypes);
+            }
+
+            function _makeVfsDirent(name, directoryKey, parentPath, options) {
+                var childKey = normalizePath(path.join(directoryKey, name));
+                var isDirectory = !!resolveVfsKey(childKey, 'dir');
+                var isFile = !isDirectory && !!resolveVfsKey(childKey, 'file');
+                var entryName = name;
+                if (options && options.encoding === 'buffer' && typeof Buffer !== 'undefined') {
+                    entryName = Buffer.from(name);
+                }
+                return {
+                    name: entryName,
+                    parentPath: parentPath,
+                    path: parentPath,
+                    isFile: function () { return isFile; },
+                    isDirectory: function () { return isDirectory; },
+                    isBlockDevice: function () { return false; },
+                    isCharacterDevice: function () { return false; },
+                    isSymbolicLink: function () { return false; },
+                    isFIFO: function () { return false; },
+                    isSocket: function () { return false; }
+                };
+            }
+
+            function _makeVfsDirentArray(names, directoryKey, parentPath, options) {
+                var sortedNames = names.slice().sort(function (a, b) {
+                    return String(a).localeCompare(String(b));
+                });
+                var entries = [];
+                for (var i = 0; i < sortedNames.length; i++) {
+                    entries.push(_makeVfsDirent(sortedNames[i], directoryKey, parentPath, options));
+                }
+                return _makeNodeArray(entries);
+            }
+
+            function _mergeVfsDirents(vfsNames, diskEntries, directoryKey, parentPath, options) {
+                var entriesByName = Object.create(null);
+                for (var i = 0; i < diskEntries.length; i++) {
+                    var diskEntry = diskEntries[i];
+                    if (diskEntry && diskEntry.name != null) {
+                        entriesByName[String(diskEntry.name)] = diskEntry;
+                    }
+                }
+                for (var j = 0; j < vfsNames.length; j++) {
+                    var vfsName = String(vfsNames[j]);
+                    if (!Object.prototype.hasOwnProperty.call(entriesByName, vfsName)) {
+                        entriesByName[vfsName] = _makeVfsDirent(vfsName, directoryKey, parentPath, options);
+                    }
+                }
+                var names = Object.keys(entriesByName).sort(function (a, b) { return a.localeCompare(b); });
+                var merged = [];
+                for (var k = 0; k < names.length; k++) merged.push(entriesByName[names[k]]);
+                return _makeNodeArray(merged);
+            }
+
             setFsHook('readdirSync', function (p, options) {
                 var vfsFiles = [];
                 var diskFiles = [];
@@ -13508,7 +13567,14 @@ function Loader() {
                     // Ignored if disk folder missing (pure VFS)
                 }
 
-                // 3. Merge & Deduplicate
+                // 3. Preserve the Node fs.readdirSync({ withFileTypes: true }) contract.
+                if (_usesWithFileTypes(options) && vfsFiles.length > 0) {
+                    return diskFiles.length > 0
+                        ? _mergeVfsDirents(vfsFiles, diskFiles, resolvedDir, p, options)
+                        : _makeVfsDirentArray(vfsFiles, resolvedDir, p, options);
+                }
+
+                // 4. Merge & Deduplicate (filename mode)
                 if (vfsFiles.length > 0 && diskFiles.length > 0) {
                     var mergedSet = {};
                     for (var i = 0; i < vfsFiles.length; i++) mergedSet[vfsFiles[i]] = true;
@@ -13546,7 +13612,15 @@ function Loader() {
                 _fs_readdir_ref.fn.call(this, p, options, function (err, diskFiles) {
                     if (err) diskFiles = [];
 
-                    // 3. Merge & Deduplicate
+                    // 3. Preserve the Node fs.readdir({ withFileTypes: true }) contract.
+                    if (_usesWithFileTypes(options) && vfsFiles.length > 0) {
+                        if (callback) callback(null, diskFiles.length > 0
+                            ? _mergeVfsDirents(vfsFiles, diskFiles, resolvedDir, p, options)
+                            : _makeVfsDirentArray(vfsFiles, resolvedDir, p, options));
+                        return;
+                    }
+
+                    // 4. Merge & Deduplicate (filename mode)
                     if (vfsFiles.length > 0 && diskFiles.length > 0) {
                         var mergedSet = {};
                         for (var i = 0; i < vfsFiles.length; i++) mergedSet[vfsFiles[i]] = true;
@@ -13802,6 +13876,11 @@ function Loader() {
 
                             return _fsp_readdir(p, options)
                                 .then(function (diskFiles) {
+                                    if (_usesWithFileTypes(options) && vfsFiles.length > 0) {
+                                        return diskFiles.length > 0
+                                            ? _mergeVfsDirents(vfsFiles, diskFiles, resolvedDir, p, options)
+                                            : _makeVfsDirentArray(vfsFiles, resolvedDir, p, options);
+                                    }
                                     if (vfsFiles.length > 0 && diskFiles.length > 0) {
                                         var m = {};
                                         vfsFiles.forEach(function (f) { m[f] = true; });
@@ -13811,7 +13890,11 @@ function Loader() {
                                     return vfsFiles.length > 0 ? _makeNodeArray(vfsFiles.sort()) : diskFiles;
                                 })
                                 .catch(function () {
-                                    if (vfsFiles.length > 0) return _makeNodeArray(vfsFiles.sort());
+                                    if (vfsFiles.length > 0) {
+                                        return _usesWithFileTypes(options)
+                                            ? _makeVfsDirentArray(vfsFiles, resolvedDir, p, options)
+                                            : _makeNodeArray(vfsFiles.sort());
+                                    }
                                     if (resolveVfsKey(key, 'dir')) return new _nodeArray(0);
                                     return _fsp_readdir(p, options);
                                 });
