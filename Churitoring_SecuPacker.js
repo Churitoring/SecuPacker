@@ -6268,7 +6268,7 @@ freely, subject to the following restrictions:
     var PLUGIN_NAME = 'Churitoring_SecuPacker';
 
     /** @constant {string} Plugin version */
-    var PLUGIN_VERSION = '1.1.7';
+    var PLUGIN_VERSION = '1.1.8';
 
     /** @constant {string} GitHub raw URL for auto-update */
     var AUTO_UPDATE_URL = 'https://raw.githubusercontent.com/Churitoring/SecuPacker/main/Churitoring_SecuPacker.js';
@@ -13306,23 +13306,55 @@ function Loader() {
                 return filename.endsWith('.node') || filename.endsWith('.dll');
             }
 
-            // [STAT COMPLETENESS] Pack a fully-compliant stat-like object that
-            // matches the interface of a native fs.Stats instance.
-            // Native fs.Stats exposes 7 boolean-query methods; the original VFS
-            // stubs only implemented 3, so callers of isBlockDevice() etc. would
-            // receive undefined and crash with "undefined is not a function".
-            function makeStatObject(isFile, isDir, size, time) {
-                return {
+            // [STAT COMPLETENESS] Return the Node.js fs.Stats field/method shape
+            // without collecting OS-specific metadata for virtual files.
+            function makeStatObject(isFile, isDir, size, time, options) {
+                var now = Date.now();
+                var mtimeMs = time instanceof Date ? time.getTime() : (time == null ? now : Number(time));
+                if (!isFinite(mtimeMs)) mtimeMs = now;
+
+                var stat = {
+                    dev: 0,
+                    mode: isFile ? 0x8000 : (isDir ? 0x4000 : 0), // S_IFREG / S_IFDIR only
+                    nlink: 1,
+                    uid: 0,
+                    gid: 0,
+                    rdev: 0,
+                    ino: 0,
+                    size: typeof size === 'number' && isFinite(size) ? size : 0,
+                    blksize: 0,
+                    blocks: 0,
+                    atimeMs: now,
+                    mtimeMs: mtimeMs,
+                    ctimeMs: now,
+                    birthtimeMs: now,
+                    atime: new Date(now),
+                    mtime: new Date(mtimeMs),
+                    ctime: new Date(now),
+                    birthtime: new Date(now),
                     isFile: function () { return isFile; },
                     isDirectory: function () { return isDir; },
                     isSymbolicLink: function () { return false; },
                     isBlockDevice: function () { return false; },
                     isCharacterDevice: function () { return false; },
                     isFIFO: function () { return false; },
-                    isSocket: function () { return false; },
-                    size: size,
-                    mtime: time, atime: time, ctime: time, birthtime: time
+                    isSocket: function () { return false; }
                 };
+
+                // Node's { bigint: true } stat option changes numeric fields to BigInt.
+                // Keep Date-valued fields as Date objects, matching Node's Stats shape.
+                if (options && options.bigint === true && typeof BigInt === 'function') {
+                    var numericFields = ['dev', 'mode', 'nlink', 'uid', 'gid', 'rdev', 'ino', 'size', 'blksize', 'blocks', 'atimeMs', 'mtimeMs', 'ctimeMs', 'birthtimeMs'];
+                    for (var i = 0; i < numericFields.length; i++) {
+                        stat[numericFields[i]] = BigInt(Math.trunc(stat[numericFields[i]]));
+                    }
+                    var ns = BigInt(1000000);
+                    stat.atimeNs = BigInt(now) * ns;
+                    stat.mtimeNs = BigInt(Math.trunc(mtimeMs)) * ns;
+                    stat.ctimeNs = BigInt(now) * ns;
+                    stat.birthtimeNs = BigInt(now) * ns;
+                }
+                return stat;
             }
 
             function setFsHook(methodName, hookFunc, originalRef) {
@@ -13336,6 +13368,144 @@ function Loader() {
                 });
             }
 
+            function resolveV8SnapshotFileKey(key) {
+                if (key == null || typeof __SECU_V8_FILES__ === 'undefined' || !__SECU_V8_FILES__) return null;
+                if (Object.prototype.hasOwnProperty.call(__SECU_V8_FILES__, key)) return key;
+                if (key.indexOf('www/') === 0) {
+                    var stripped = key.substring(4);
+                    if (Object.prototype.hasOwnProperty.call(__SECU_V8_FILES__, stripped)) return stripped;
+                }
+                return null;
+            }
+
+            function isV8SnapshotFileKey(key) {
+                return resolveV8SnapshotFileKey(key) !== null;
+            }
+
+            function resolveV8SnapshotDirectoryKey(key) {
+                if (key == null || typeof __SECU_V8_FILES__ === 'undefined' || !__SECU_V8_FILES__) return null;
+                var keys = Object.keys(__SECU_V8_FILES__);
+                function hasChildren(dirKey) {
+                    var prefix = dirKey ? dirKey + '/' : '';
+                    for (var i = 0; i < keys.length; i++) {
+                        if (keys[i].indexOf(prefix) === 0 && keys[i].length > prefix.length) return true;
+                    }
+                    return false;
+                }
+                if (hasChildren(key)) return key;
+                if (key.indexOf('www/') === 0) {
+                    var stripped = key.substring(4);
+                    if (hasChildren(stripped)) return stripped;
+                }
+                return null;
+            }
+
+            function isV8SnapshotDirectoryKey(key) {
+                return resolveV8SnapshotDirectoryKey(key) !== null;
+            }
+
+            function getV8SnapshotChildDisplayName(dirKey, childName) {
+                // The V8 registry intentionally stores lowercase keys only.
+                // Restore the original plugin filename casing from RPG Maker's
+                // already-loaded plugin list when it is available.
+                if (!dirKey || dirKey.indexOf('js/plugins') !== 0) return childName;
+
+                var pluginDir = dirKey.substring('js/plugins'.length).replace(/^\/+/, '');
+                var candidates = [];
+                try {
+                    if (typeof $plugins !== 'undefined' && $plugins) {
+                        for (var i = 0; i < $plugins.length; i++) {
+                            if ($plugins[i] && $plugins[i].name) candidates.push($plugins[i].name);
+                        }
+                    }
+                } catch (e) { }
+                try {
+                    if (typeof PluginManager !== 'undefined' && PluginManager._scripts) {
+                        for (var j = 0; j < PluginManager._scripts.length; j++) {
+                            if (PluginManager._scripts[j]) candidates.push(PluginManager._scripts[j]);
+                        }
+                    }
+                } catch (e) { }
+
+                for (var k = 0; k < candidates.length; k++) {
+                    var pluginPath = String(candidates[k]).replace(/\\/g, '/').replace(/\.js$/i, '');
+                    var fullPath = 'js/plugins/' + pluginPath + '.js';
+                    var lowerFullPath = fullPath.toLowerCase();
+                    if (!Object.prototype.hasOwnProperty.call(__SECU_V8_FILES__, lowerFullPath)) continue;
+                    if (pluginDir && lowerFullPath.indexOf('js/plugins/' + pluginDir.toLowerCase() + '/') !== 0) continue;
+
+                    var relative = pluginDir
+                        ? fullPath.substring(('js/plugins/' + pluginDir + '/').length)
+                        : fullPath.substring('js/plugins/'.length);
+                    var firstChild = relative.split('/')[0];
+                    if (firstChild && firstChild.toLowerCase() === childName.toLowerCase()) return firstChild;
+                }
+                return childName;
+            }
+
+            function getV8SnapshotDirectoryChildren(key) {
+                var dirKey = resolveV8SnapshotDirectoryKey(key);
+                if (dirKey === null) return [];
+                var prefix = dirKey ? dirKey + '/' : '';
+                var keys = Object.keys(__SECU_V8_FILES__);
+                var found = Object.create(null);
+                for (var i = 0; i < keys.length; i++) {
+                    if (keys[i].indexOf(prefix) !== 0) continue;
+                    var rest = keys[i].substring(prefix.length);
+                    if (!rest) continue;
+                    var slash = rest.indexOf('/');
+                    var child = slash === -1 ? rest : rest.substring(0, slash);
+                    if (child) {
+                        child = getV8SnapshotChildDisplayName(dirKey, child);
+                        found[child.toLowerCase()] = child;
+                    }
+                }
+                return Object.keys(found).map(function (lower) { return found[lower]; }).sort();
+            }
+
+            function mergeDirectoryChildNames(vfsNames, v8Names) {
+                var merged = Object.create(null);
+                var result = [];
+                function add(name) {
+                    var value = String(name);
+                    var lower = value.toLowerCase();
+                    if (!Object.prototype.hasOwnProperty.call(merged, lower)) {
+                        merged[lower] = true;
+                        result.push(value);
+                    }
+                }
+                for (var i = 0; i < vfsNames.length; i++) add(vfsNames[i]);
+                for (var j = 0; j < v8Names.length; j++) add(v8Names[j]);
+                return result;
+            }
+
+            function resolveVirtualOrV8PathKey(key) {
+                var resolved = resolveVfsKey(key, 'any');
+                if (resolved !== null) return resolved;
+                resolved = resolveV8SnapshotFileKey(key);
+                if (resolved !== null) return resolved;
+                resolved = resolveV8SnapshotDirectoryKey(key);
+                return resolved !== null ? resolved : null;
+            }
+
+            function isVirtualOrV8Path(key) {
+                return resolveVirtualOrV8PathKey(key) !== null;
+            }
+
+            function formatVirtualReadBuffer(buffer, options) {
+                var encoding = typeof options === 'string' ? options : (options && options.encoding);
+                if (!encoding || encoding === 'buffer') return buffer;
+                try { return buffer.toString(encoding); } catch (e) { return buffer; }
+            }
+
+            function getVirtualAbsolutePath(key, options) {
+                var resolved = resolveVirtualOrV8PathKey(key);
+                if (resolved === null) return null;
+                var absolute = path.join(path.dirname(process.mainModule.filename), resolved.replace(/\//g, path.sep));
+                var encoding = typeof options === 'string' ? options : (options && options.encoding);
+                return encoding === 'buffer' ? Buffer.from(absolute) : absolute;
+            }
+
             var _fs_existsSync_ref = { fn: fs.existsSync };
             setFsHook('existsSync', function (p) {
                 if (shouldBypassVFS(p)) {
@@ -13343,26 +13513,24 @@ function Loader() {
                 }
                 try {
                     var key = normalizePath(p);
-                    if (resolveVfsKey(key, 'any')) return true;
-                    if (key && typeof __SECU_V8_FILES__ !== 'undefined' && __SECU_V8_FILES__ &&
-                        Object.prototype.hasOwnProperty.call(__SECU_V8_FILES__, key)) return true;
+                    if (isVirtualOrV8Path(key)) return true;
                 } catch (e) { }
                 return _fs_existsSync_ref.fn.apply(this, arguments);
             }, _fs_existsSync_ref);
 
             var _fs_exists_ref = { fn: fs.exists };
             setFsHook('exists', function (p, callback) {
-                if (shouldBypassVFS(p)) {
-                    return _fs_exists_ref.fn.call(this, p, callback);
+                if (shouldBypassVFS(p) || typeof callback !== 'function') {
+                    return _fs_exists_ref.fn.apply(this, arguments);
                 }
                 try {
                     var key = normalizePath(p);
-                    if (resolveVfsKey(key, 'any')) {
-                        if (callback) callback(true);
+                    if (isVirtualOrV8Path(key)) {
+                        setImmediate(function () { callback(true); });
                         return;
                     }
                 } catch (e) { }
-                return _fs_exists_ref.fn.call(this, p, callback);
+                return _fs_exists_ref.fn.apply(this, arguments);
             }, _fs_exists_ref);
 
             // [READ PRIORITY] VFS -> Disk
@@ -13378,9 +13546,10 @@ function Loader() {
                         var buffer = decryptFullFile(resolved);
                         if (!buffer) throw new Error("Decrypt Fail");
 
-                        var encoding = typeof options === 'string' ? options : (options ? options.encoding : null);
-                        if (encoding) { try { return buffer.toString(encoding); } catch (e) { /* unsupported encoding -> fall through to raw Buffer */ } }
-                        return buffer;
+                        return formatVirtualReadBuffer(buffer, options);
+                    }
+                    if (isV8SnapshotFileKey(key)) {
+                        return formatVirtualReadBuffer(Buffer.alloc(0), options);
                     }
                 } catch (e) { }
                 return _fs_readFileSync_ref.fn.apply(this, arguments);
@@ -13389,22 +13558,19 @@ function Loader() {
             var _fs_readFile_ref = { fn: fs.readFile };
             setFsHook('readFile', function (p, options, callback) {
                 if (typeof options === 'function') { callback = options; options = null; }
-                if (shouldBypassVFS(p)) {
+                if (shouldBypassVFS(p) || typeof callback !== 'function') {
                     return _fs_readFile_ref.fn.apply(this, arguments);
                 }
                 try {
                     var key = normalizePath(p);
                     var resolved = resolveVfsKey(key, 'file');
-                    if (resolved) {
+                    if (resolved || isV8SnapshotFileKey(key)) {
                         setImmediate(function () {
                             try {
-                                var buffer = decryptFullFile(resolved);
+                                var buffer = resolved ? decryptFullFile(resolved) : Buffer.alloc(0);
                                 if (!buffer) throw new Error("Decrypt Fail");
-                                var encoding = typeof options === 'string' ? options : (options ? options.encoding : null);
-                                var result = buffer;
-                                if (encoding) { try { result = buffer.toString(encoding); } catch (e) { /* unsupported encoding -> raw Buffer */ } }
-                                if (callback) callback(null, result);
-                            } catch (err) { if (callback) callback(err); }
+                                callback(null, formatVirtualReadBuffer(buffer, options));
+                            } catch (err) { callback(err); }
                         });
                         return;
                     }
@@ -13412,31 +13578,28 @@ function Loader() {
                 return _fs_readFile_ref.fn.apply(this, arguments);
             }, _fs_readFile_ref);
 
-            // [HYBRID STAT] Merge Stats
+            // [HYBRID STAT] Preserve saved mtime and report current time for other time fields.
             var _fs_statSync_ref = { fn: fs.statSync };
-            setFsHook('statSync', function (p) {
+            setFsHook('statSync', function (p, options) {
                 if (shouldBypassVFS(p)) {
                     return _fs_statSync_ref.fn.apply(this, arguments);
                 }
                 try {
                     var key = normalizePath(p);
-                    // 1. Is it a VFS File?
                     var resolvedFile = resolveVfsKey(key, 'file');
                     if (resolvedFile) {
                         var meta = resolveFileMetadata(resolvedFile);
-                        if (meta) {
-                            var mtime = new Date(meta.mtime);
-                            return makeStatObject(true, false, meta.origSize, mtime);
-                        }
+                        if (meta) return makeStatObject(true, false, meta.origSize, meta.mtime, options);
                     }
-                    // 2. Is it a VFS Directory (explicit in DirMap or synthesized via Mirage)?
+                    if (isV8SnapshotFileKey(key)) {
+                        return makeStatObject(true, false, 0, Date.now(), options);
+                    }
                     var resolvedDir = resolveVfsKey(key, 'dir');
-                    if (resolvedDir) {
-                        // Check if it exists on disk too (Hybrid)
+                    if (resolvedDir || isV8SnapshotDirectoryKey(key)) {
                         try {
                             return _fs_statSync_ref.fn.apply(this, arguments);
                         } catch (e) {
-                            return makeStatObject(false, true, 0, new Date());
+                            return makeStatObject(false, true, 0, Date.now(), options);
                         }
                     }
                 } catch (e) { }
@@ -13444,33 +13607,112 @@ function Loader() {
             }, _fs_statSync_ref);
 
             var _fs_lstatSync_ref = { fn: fs.lstatSync };
-            setFsHook('lstatSync', function (p) {
+            setFsHook('lstatSync', function (p, options) {
                 if (shouldBypassVFS(p)) {
                     return _fs_lstatSync_ref.fn.apply(this, arguments);
                 }
                 try {
                     var key = normalizePath(p);
-                    // 1. Is it a VFS File?
                     var resolvedFile = resolveVfsKey(key, 'file');
                     if (resolvedFile) {
                         var meta = resolveFileMetadata(resolvedFile);
-                        if (meta) {
-                            var mtime = new Date(meta.mtime);
-                            return makeStatObject(true, false, meta.origSize, mtime);
-                        }
+                        if (meta) return makeStatObject(true, false, meta.origSize, meta.mtime, options);
                     }
-                    // 2. Is it a VFS Directory?
+                    if (isV8SnapshotFileKey(key)) {
+                        return makeStatObject(true, false, 0, Date.now(), options);
+                    }
                     var resolvedDir = resolveVfsKey(key, 'dir');
-                    if (resolvedDir) {
+                    if (resolvedDir || isV8SnapshotDirectoryKey(key)) {
                         try {
                             return _fs_lstatSync_ref.fn.apply(this, arguments);
                         } catch (e) {
-                            return makeStatObject(false, true, 0, new Date());
+                            return makeStatObject(false, true, 0, Date.now(), options);
                         }
                     }
                 } catch (e) { }
                 return _fs_lstatSync_ref.fn.apply(this, arguments);
             }, _fs_lstatSync_ref);
+
+            // [HYBRID STAT ASYNC] Callback forms mirror the sync VFS behavior.
+            var _fs_stat_ref = { fn: fs.stat };
+            setFsHook('stat', function (p, options, callback) {
+                if (typeof options === 'function') { callback = options; options = undefined; }
+                if (shouldBypassVFS(p) || typeof callback !== 'function') {
+                    return _fs_stat_ref.fn.apply(this, arguments);
+                }
+
+                var key;
+                var resolvedFile;
+                var resolvedDir;
+                try {
+                    key = normalizePath(p);
+                    resolvedFile = resolveVfsKey(key, 'file');
+                    if (resolvedFile) {
+                        var meta = resolveFileMetadata(resolvedFile);
+                        if (meta) {
+                            var fileStats = makeStatObject(true, false, meta.origSize, meta.mtime, options);
+                            setImmediate(function () { callback(null, fileStats); });
+                            return;
+                        }
+                    }
+                    if (isV8SnapshotFileKey(key)) {
+                        var v8Stats = makeStatObject(true, false, 0, Date.now(), options);
+                        setImmediate(function () { callback(null, v8Stats); });
+                        return;
+                    }
+                    resolvedDir = resolveVfsKey(key, 'dir') || (isV8SnapshotDirectoryKey(key) ? key : null);
+                } catch (e) { }
+
+                if (resolvedDir) {
+                    var dirCallback = function (err, stats) {
+                        callback(null, err ? makeStatObject(false, true, 0, Date.now(), options) : stats);
+                    };
+                    return options === undefined
+                        ? _fs_stat_ref.fn.call(this, p, dirCallback)
+                        : _fs_stat_ref.fn.call(this, p, options, dirCallback);
+                }
+                return _fs_stat_ref.fn.apply(this, arguments);
+            }, _fs_stat_ref);
+
+            var _fs_lstat_ref = { fn: fs.lstat };
+            setFsHook('lstat', function (p, options, callback) {
+                if (typeof options === 'function') { callback = options; options = undefined; }
+                if (shouldBypassVFS(p) || typeof callback !== 'function') {
+                    return _fs_lstat_ref.fn.apply(this, arguments);
+                }
+
+                var key;
+                var resolvedFile;
+                var resolvedDir;
+                try {
+                    key = normalizePath(p);
+                    resolvedFile = resolveVfsKey(key, 'file');
+                    if (resolvedFile) {
+                        var meta = resolveFileMetadata(resolvedFile);
+                        if (meta) {
+                            var fileStats = makeStatObject(true, false, meta.origSize, meta.mtime, options);
+                            setImmediate(function () { callback(null, fileStats); });
+                            return;
+                        }
+                    }
+                    if (isV8SnapshotFileKey(key)) {
+                        var v8Stats = makeStatObject(true, false, 0, Date.now(), options);
+                        setImmediate(function () { callback(null, v8Stats); });
+                        return;
+                    }
+                    resolvedDir = resolveVfsKey(key, 'dir') || (isV8SnapshotDirectoryKey(key) ? key : null);
+                } catch (e) { }
+
+                if (resolvedDir) {
+                    var dirCallback = function (err, stats) {
+                        callback(null, err ? makeStatObject(false, true, 0, Date.now(), options) : stats);
+                    };
+                    return options === undefined
+                        ? _fs_lstat_ref.fn.call(this, p, dirCallback)
+                        : _fs_lstat_ref.fn.call(this, p, options, dirCallback);
+                }
+                return _fs_lstat_ref.fn.apply(this, arguments);
+            }, _fs_lstat_ref);
 
             // [HYBRID READDIR] Merge VFS List + Disk List (Deduplicated)
             var _fs_readdirSync_ref = { fn: fs.readdirSync };
@@ -13497,8 +13739,8 @@ function Loader() {
 
             function _makeVfsDirent(name, directoryKey, parentPath, options) {
                 var childKey = normalizePath(path.join(directoryKey, name));
-                var isDirectory = !!resolveVfsKey(childKey, 'dir');
-                var isFile = !isDirectory && !!resolveVfsKey(childKey, 'file');
+                var isDirectory = !!resolveVfsKey(childKey, 'dir') || isV8SnapshotDirectoryKey(childKey);
+                var isFile = !isDirectory && (!!resolveVfsKey(childKey, 'file') || isV8SnapshotFileKey(childKey));
                 var entryName = name;
                 if (options && options.encoding === 'buffer' && typeof Buffer !== 'undefined') {
                     entryName = Buffer.from(name);
@@ -13548,17 +13790,86 @@ function Loader() {
                 return _makeNodeArray(merged);
             }
 
+            // Minimal fs.Dir-compatible wrapper for directories that contain VFS/V8 entries.
+            // Entries are collected eagerly so both physical and virtual children are preserved.
+            function makeVirtualDirObject(p, options) {
+                var entries = fs.readdirSync(p, { withFileTypes: true, encoding: options && options.encoding });
+                var index = 0;
+                var closed = false;
+                var dir = { path: p };
+
+                function closedError() {
+                    var err = new Error('Directory handle was closed');
+                    err.code = 'ERR_DIR_CLOSED';
+                    return err;
+                }
+                function nextEntry() {
+                    if (closed) throw closedError();
+                    return index < entries.length ? entries[index++] : null;
+                }
+                dir.readSync = function () { return nextEntry(); };
+                dir.read = function (callback) {
+                    if (typeof callback === 'function') {
+                        setImmediate(function () {
+                            try { callback(null, nextEntry()); } catch (err) { callback(err); }
+                        });
+                        return;
+                    }
+                    return new Promise(function (resolve, reject) {
+                        setImmediate(function () {
+                            try { resolve(nextEntry()); } catch (err) { reject(err); }
+                        });
+                    });
+                };
+                dir.closeSync = function () {
+                    if (closed) throw closedError();
+                    closed = true;
+                };
+                dir.close = function (callback) {
+                    if (typeof callback === 'function') {
+                        setImmediate(function () {
+                            if (closed) callback(closedError());
+                            else { closed = true; callback(null); }
+                        });
+                        return;
+                    }
+                    return new Promise(function (resolve, reject) {
+                        setImmediate(function () {
+                            if (closed) reject(closedError());
+                            else { closed = true; resolve(); }
+                        });
+                    });
+                };
+                if (typeof Symbol !== 'undefined' && Symbol.asyncIterator) {
+                    dir[Symbol.asyncIterator] = function () {
+                        return {
+                            next: function () {
+                                return dir.read().then(function (entry) {
+                                    if (entry) return { value: entry, done: false };
+                                    return dir.close().then(function () { return { value: undefined, done: true }; });
+                                });
+                            },
+                            return: function () {
+                                return dir.close().then(function () { return { value: undefined, done: true }; });
+                            }
+                        };
+                    };
+                }
+                return dir;
+            }
+
             setFsHook('readdirSync', function (p, options) {
                 var vfsFiles = [];
                 var diskFiles = [];
                 var key = normalizePath(p);
-                if (!key) return _fs_readdirSync_ref.fn.apply(this, arguments);
+                if (key === null) return _fs_readdirSync_ref.fn.apply(this, arguments);
 
-                // 1. Get VFS List (explicit DirMap entry OR synthesized via Mirage Folder Synthesis)
+                // 1. Merge VFS children with files/directories implied by the V8 registry.
                 var resolvedDir = resolveVfsKey(key, 'dir');
-                if (resolvedDir) {
-                    vfsFiles = getVirtualDirChildren(resolvedDir);
-                }
+                var v8DirKey = resolveV8SnapshotDirectoryKey(key);
+                var directoryKey = resolvedDir || (v8DirKey !== null ? v8DirKey : key);
+                if (resolvedDir) vfsFiles = getVirtualDirChildren(resolvedDir);
+                if (v8DirKey !== null) vfsFiles = mergeDirectoryChildNames(vfsFiles, getV8SnapshotDirectoryChildren(v8DirKey));
 
                 // 2. Get Disk List (Safe Try-Catch)
                 try {
@@ -13570,8 +13881,8 @@ function Loader() {
                 // 3. Preserve the Node fs.readdirSync({ withFileTypes: true }) contract.
                 if (_usesWithFileTypes(options) && vfsFiles.length > 0) {
                     return diskFiles.length > 0
-                        ? _mergeVfsDirents(vfsFiles, diskFiles, resolvedDir, p, options)
-                        : _makeVfsDirentArray(vfsFiles, resolvedDir, p, options);
+                        ? _mergeVfsDirents(vfsFiles, diskFiles, directoryKey, p, options)
+                        : _makeVfsDirentArray(vfsFiles, directoryKey, p, options);
                 }
 
                 // 4. Merge & Deduplicate (filename mode)
@@ -13588,7 +13899,7 @@ function Loader() {
                 // [MIRAGE FOLDER SYNTHESIS] If this is a recognized virtual directory but it
                 // has no children (empty or purely an ancestor node), swallow the ENOENT and
                 // return a Node-context empty array.
-                if (resolveVfsKey(key, 'dir')) return new _nodeArray(0);
+                if (resolvedDir || v8DirKey !== null) return new _nodeArray(0);
 
                 // Fallback to native error if truly unknown path
                 return _fs_readdirSync_ref.fn.apply(this, arguments);
@@ -13598,15 +13909,17 @@ function Loader() {
             var _fs_readdir_ref = { fn: fs.readdir };
             setFsHook('readdir', function (p, options, callback) {
                 if (typeof options === 'function') { callback = options; options = null; }
+                if (typeof callback !== 'function') return _fs_readdir_ref.fn.apply(this, arguments);
                 var vfsFiles = [];
                 var key = normalizePath(p);
-                if (!key) { _fs_readdir_ref.fn.call(this, p, options, callback); return; }
+                if (key === null) { _fs_readdir_ref.fn.call(this, p, options, callback); return; }
 
-                // 1. Get VFS List (explicit DirMap entry OR synthesized via Mirage Folder Synthesis)
+                // 1. Merge VFS children with files/directories implied by the V8 registry.
                 var resolvedDir = resolveVfsKey(key, 'dir');
-                if (resolvedDir) {
-                    vfsFiles = getVirtualDirChildren(resolvedDir);
-                }
+                var v8DirKey = resolveV8SnapshotDirectoryKey(key);
+                var directoryKey = resolvedDir || (v8DirKey !== null ? v8DirKey : key);
+                if (resolvedDir) vfsFiles = getVirtualDirChildren(resolvedDir);
+                if (v8DirKey !== null) vfsFiles = mergeDirectoryChildNames(vfsFiles, getV8SnapshotDirectoryChildren(v8DirKey));
 
                 // 2. Get Disk List (Safe)
                 _fs_readdir_ref.fn.call(this, p, options, function (err, diskFiles) {
@@ -13615,8 +13928,8 @@ function Loader() {
                     // 3. Preserve the Node fs.readdir({ withFileTypes: true }) contract.
                     if (_usesWithFileTypes(options) && vfsFiles.length > 0) {
                         if (callback) callback(null, diskFiles.length > 0
-                            ? _mergeVfsDirents(vfsFiles, diskFiles, resolvedDir, p, options)
-                            : _makeVfsDirentArray(vfsFiles, resolvedDir, p, options));
+                            ? _mergeVfsDirents(vfsFiles, diskFiles, directoryKey, p, options)
+                            : _makeVfsDirentArray(vfsFiles, directoryKey, p, options));
                         return;
                     }
 
@@ -13630,7 +13943,7 @@ function Loader() {
                         if (callback) callback(null, _makeNodeArray(vfsFiles.sort()));
                     } else if (diskFiles.length > 0) {
                         if (callback) callback(null, diskFiles);
-                    } else if (resolveVfsKey(key, 'dir')) {
+                    } else if (resolvedDir || v8DirKey !== null) {
                         // [MIRAGE FOLDER SYNTHESIS] Known virtual directory with no children —
                         // return Node-context empty array.
                         if (callback) callback(null, new _nodeArray(0));
@@ -13642,6 +13955,40 @@ function Loader() {
                 });
             }, _fs_readdir_ref);
 
+            var _fs_opendirSync_ref = { fn: fs.opendirSync };
+            if (typeof fs.opendirSync === 'function') {
+                setFsHook('opendirSync', function (p, options) {
+                    try {
+                        var key = normalizePath(p);
+                        if (key !== null && (resolveVfsKey(key, 'dir') || isV8SnapshotDirectoryKey(key))) {
+                            return makeVirtualDirObject(p, options);
+                        }
+                    } catch (e) { }
+                    return _fs_opendirSync_ref.fn.apply(this, arguments);
+                }, _fs_opendirSync_ref);
+            }
+
+            var _fs_opendir_ref = { fn: fs.opendir };
+            if (typeof fs.opendir === 'function') {
+                setFsHook('opendir', function (p, options, callback) {
+                    if (typeof options === 'function') { callback = options; options = undefined; }
+                    if (typeof callback !== 'function') return _fs_opendir_ref.fn.apply(this, arguments);
+                    try {
+                        var key = normalizePath(p);
+                        if (key !== null && (resolveVfsKey(key, 'dir') || isV8SnapshotDirectoryKey(key))) {
+                            setImmediate(function () {
+                                try { callback(null, makeVirtualDirObject(p, options)); }
+                                catch (err) { callback(err); }
+                            });
+                            return;
+                        }
+                    } catch (e) { }
+                    return options === undefined
+                        ? _fs_opendir_ref.fn.call(this, p, callback)
+                        : _fs_opendir_ref.fn.call(this, p, options, callback);
+                }, _fs_opendir_ref);
+            }
+
             var _fs_accessSync_ref = { fn: fs.accessSync };
             setFsHook('accessSync', function (p, mode) {
                 if (shouldBypassVFS(p)) {
@@ -13649,28 +13996,62 @@ function Loader() {
                 }
                 try {
                     var key = normalizePath(p);
-                    if (resolveVfsKey(key, 'any')) {
-                        return undefined;
-                    }
+                    if (isVirtualOrV8Path(key)) return undefined;
                 } catch (e) { }
                 return _fs_accessSync_ref.fn.apply(this, arguments);
             }, _fs_accessSync_ref);
 
-            var _fs_realpathSync_ref = { fn: fs.realpathSync };
-            setFsHook('realpathSync', function (p, options) {
-                if (shouldBypassVFS(p)) {
-                    return _fs_realpathSync_ref.fn.apply(this, arguments);
+            var _fs_access_ref = { fn: fs.access };
+            setFsHook('access', function (p, mode, callback) {
+                if (typeof mode === 'function') { callback = mode; mode = undefined; }
+                if (shouldBypassVFS(p) || typeof callback !== 'function') {
+                    return _fs_access_ref.fn.apply(this, arguments);
                 }
                 try {
                     var key = normalizePath(p);
-                    var resolved = resolveVfsKey(key, 'any');
-                    if (resolved) {
-                        var _rpBase = path.dirname(process.mainModule.filename);
-                        return path.join(_rpBase, resolved.replace(/\//g, path.sep));
+                    if (isVirtualOrV8Path(key)) {
+                        setImmediate(function () { callback(null); });
+                        return;
                     }
                 } catch (e) { }
+                return _fs_access_ref.fn.apply(this, arguments);
+            }, _fs_access_ref);
+
+            var _fs_realpathSync_ref = { fn: fs.realpathSync };
+            function _realpathSyncHook(p, options) {
+                if (shouldBypassVFS(p)) return _fs_realpathSync_ref.fn.apply(this, arguments);
+                try {
+                    var key = normalizePath(p);
+                    var virtualPath = key === null ? null : getVirtualAbsolutePath(key, options);
+                    if (virtualPath !== null) return virtualPath;
+                } catch (e) { }
                 return _fs_realpathSync_ref.fn.apply(this, arguments);
-            }, _fs_realpathSync_ref);
+            }
+            setFsHook('realpathSync', _realpathSyncHook, _fs_realpathSync_ref);
+            if (_fs_realpathSync_ref.fn.native) {
+                _realpathSyncHook.native = function (p, options) { return _realpathSyncHook.call(this, p, options); };
+            }
+
+            var _fs_realpath_ref = { fn: fs.realpath };
+            function _realpathHook(p, options, callback) {
+                if (typeof options === 'function') { callback = options; options = undefined; }
+                if (shouldBypassVFS(p) || typeof callback !== 'function') return _fs_realpath_ref.fn.apply(this, arguments);
+                try {
+                    var key = normalizePath(p);
+                    var virtualPath = key === null ? null : getVirtualAbsolutePath(key, options);
+                    if (virtualPath !== null) {
+                        setImmediate(function () { callback(null, virtualPath); });
+                        return;
+                    }
+                } catch (e) { }
+                return options === undefined
+                    ? _fs_realpath_ref.fn.call(this, p, callback)
+                    : _fs_realpath_ref.fn.call(this, p, options, callback);
+            }
+            setFsHook('realpath', _realpathHook, _fs_realpath_ref);
+            if (_fs_realpath_ref.fn.native) {
+                _realpathHook.native = function (p, options, callback) { return _realpathHook.call(this, p, options, callback); };
+            }
 
             // --- 7B: Virtual File Descriptor (VFD) Manager ---
             var VFD_BASE = 50000;
@@ -13696,9 +14077,27 @@ function Loader() {
                     entryKey: entryKey, // Store derived key (will be zeroized on close)
                     meta: meta,
                     isChunked: meta.isChunked || false,
-                    chunks: meta.chunks || null
+                    chunks: meta.chunks || null,
+                    isV8Snapshot: false
                 };
 
+                return fd;
+            }
+
+            function allocateEmptyV8VFD(v8Path) {
+                var key = resolveV8SnapshotFileKey(v8Path);
+                if (key === null) return null;
+                var fd = VFD_FREE_POOL.length > 0 ? VFD_FREE_POOL.pop() : VFD_COUNTER++;
+                VFD_MAP[fd] = {
+                    path: key,
+                    position: 0,
+                    size: 0,
+                    entryKey: null,
+                    meta: null,
+                    isChunked: false,
+                    chunks: null,
+                    isV8Snapshot: true
+                };
                 return fd;
             }
 
@@ -13769,6 +14168,9 @@ function Loader() {
                     if (resolved) {
                         var vfd = allocateVFD(resolved);
                         if (vfd) return vfd;
+                    } else if (isV8SnapshotFileKey(key)) {
+                        var v8fd = allocateEmptyV8VFD(key);
+                        if (v8fd) return v8fd;
                     }
                 } catch (e) { }
                 return _fs_openSync_ref.fn.apply(this, arguments);
@@ -13776,12 +14178,13 @@ function Loader() {
 
             setFsHook('open', function (p, flags, mode, callback) {
                 if (typeof mode === 'function') { callback = mode; mode = null; }
+                if (typeof callback !== 'function') return _fs_open_ref.fn.apply(this, arguments);
                 try {
                     var key = normalizePath(p);
                     var resolved = resolveVfsKey(key, 'file');
-                    if (resolved) {
+                    if (resolved || isV8SnapshotFileKey(key)) {
                         setImmediate(function () {
-                            var vfd = allocateVFD(resolved);
+                            var vfd = resolved ? allocateVFD(resolved) : allocateEmptyV8VFD(key);
                             if (vfd && callback) callback(null, vfd);
                             else if (callback) callback(new Error("VFD Allocation Failed"));
                         });
@@ -13803,7 +14206,7 @@ function Loader() {
             }, _fs_readSync_ref);
 
             setFsHook('read', function (fd, buffer, offset, length, position, callback) {
-                if (fd >= VFD_BASE && VFD_MAP[fd]) {
+                if (fd >= VFD_BASE && VFD_MAP[fd] && typeof callback === 'function') {
                     setImmediate(function () {
                         try {
                             var bytesRead = readFromVFD(fd, buffer, offset, length, position);
@@ -13816,6 +14219,67 @@ function Loader() {
                 }
                 return _fs_read_ref.fn.apply(this, arguments);
             }, _fs_read_ref);
+
+            // [VFD READV] Preserve Node's vectored-read APIs for virtual descriptors.
+            function _readVfdBuffers(fd, buffers, position) {
+                var total = 0;
+                for (var i = 0; i < buffers.length; i++) {
+                    var view = buffers[i];
+                    var target = Buffer.isBuffer(view) ? view : Buffer.from(view.buffer, view.byteOffset || 0, view.byteLength);
+                    var bytesRead = readFromVFD(fd, target, 0, target.length, position == null ? null : position + total);
+                    if (bytesRead < 0) {
+                        var err = new Error('Virtual file read failed');
+                        err.code = 'EIO';
+                        throw err;
+                    }
+                    total += bytesRead;
+                    if (bytesRead < target.length) break;
+                }
+                return total;
+            }
+
+            if (typeof fs.readvSync === 'function') {
+                var _fs_readvSync_ref = { fn: fs.readvSync };
+                setFsHook('readvSync', function (fd, buffers, position) {
+                    if (fd >= VFD_BASE && VFD_MAP[fd]) return _readVfdBuffers(fd, buffers, position);
+                    return _fs_readvSync_ref.fn.apply(this, arguments);
+                }, _fs_readvSync_ref);
+            }
+
+            if (typeof fs.readv === 'function') {
+                var _fs_readv_ref = { fn: fs.readv };
+                setFsHook('readv', function (fd, buffers, position, callback) {
+                    if (typeof position === 'function') { callback = position; position = null; }
+                    if (fd >= VFD_BASE && VFD_MAP[fd] && typeof callback === 'function') {
+                        setImmediate(function () {
+                            try { callback(null, _readVfdBuffers(fd, buffers, position), buffers); }
+                            catch (err) { callback(err); }
+                        });
+                        return;
+                    }
+                    return _fs_readv_ref.fn.apply(this, arguments);
+                }, _fs_readv_ref);
+            }
+
+            // Hook fs.fstat / fs.fstatSync for VFDs returned by the virtual open hooks.
+            var _fs_fstatSync_ref = { fn: fs.fstatSync };
+            setFsHook('fstatSync', function (fd, options) {
+                var state = fd >= VFD_BASE ? VFD_MAP[fd] : null;
+                if (state) return makeStatObject(true, false, state.size, state.meta && state.meta.mtime, options);
+                return _fs_fstatSync_ref.fn.apply(this, arguments);
+            }, _fs_fstatSync_ref);
+
+            var _fs_fstat_ref = { fn: fs.fstat };
+            setFsHook('fstat', function (fd, options, callback) {
+                if (typeof options === 'function') { callback = options; options = undefined; }
+                var state = fd >= VFD_BASE ? VFD_MAP[fd] : null;
+                if (state && typeof callback === 'function') {
+                    var stats = makeStatObject(true, false, state.size, state.meta && state.meta.mtime, options);
+                    setImmediate(function () { callback(null, stats); });
+                    return;
+                }
+                return _fs_fstat_ref.fn.apply(this, arguments);
+            }, _fs_fstat_ref);
 
             // Hook fs.close / fs.closeSync
             var _fs_close_ref = { fn: fs.close };
@@ -13830,7 +14294,7 @@ function Loader() {
             }, _fs_closeSync_ref);
 
             setFsHook('close', function (fd, callback) {
-                if (fd >= VFD_BASE && VFD_MAP[fd]) {
+                if (fd >= VFD_BASE && VFD_MAP[fd] && typeof callback === 'function') {
                     deallocateVFD(fd);
                     if (callback) setImmediate(function () { callback(null); });
                     return;
@@ -13842,19 +14306,98 @@ function Loader() {
             var _fs_createReadStream_ref = { fn: fs.createReadStream };
             var stream = require('stream');
 
+            function makeBufferReadStream(buffer) {
+                var readableStream = new stream.Readable();
+                readableStream._read = function () { };
+                if (buffer && buffer.length) readableStream.push(buffer);
+                readableStream.push(null);
+                return readableStream;
+            }
+
+            function makeVirtualFileHandle(fd) {
+                var handle = { fd: fd };
+                function getState() {
+                    var state = VFD_MAP[fd];
+                    if (!state) {
+                        var err = new Error('Bad file descriptor');
+                        err.code = 'EBADF';
+                        throw err;
+                    }
+                    return state;
+                }
+                function readBuffer(buffer, offset, length, position) {
+                    var target = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer.buffer, buffer.byteOffset || 0, buffer.byteLength);
+                    var bytesRead = readFromVFD(fd, target, offset, length, position);
+                    if (bytesRead < 0) {
+                        var err = new Error('Virtual file read failed');
+                        err.code = 'EIO';
+                        throw err;
+                    }
+                    return { bytesRead: bytesRead, buffer: buffer };
+                }
+                handle.read = function (buffer, offset, length, position) {
+                    return Promise.resolve().then(function () {
+                        getState();
+                        var isTypedView = buffer && typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView && ArrayBuffer.isView(buffer);
+                        if (buffer && typeof buffer === 'object' && !Buffer.isBuffer(buffer) && !isTypedView &&
+                            buffer.buffer && (Buffer.isBuffer(buffer.buffer) || (ArrayBuffer.isView && ArrayBuffer.isView(buffer.buffer)))) {
+                            var opts = buffer;
+                            buffer = opts.buffer; offset = opts.offset || 0; length = opts.length; position = opts.position;
+                        }
+                        if (!buffer) buffer = Buffer.alloc(16384);
+                        if (offset == null) offset = 0;
+                        if (length == null) length = (buffer.byteLength != null ? buffer.byteLength : buffer.length) - offset;
+                        return readBuffer(buffer, offset, length, position == null ? null : position);
+                    });
+                };
+                handle.readv = function (buffers, position) {
+                    return Promise.resolve().then(function () {
+                        getState();
+                        var total = 0;
+                        var pos = position == null ? null : position;
+                        for (var i = 0; i < buffers.length; i++) {
+                            var result = readBuffer(buffers[i], 0, buffers[i].byteLength || buffers[i].length, pos == null ? null : pos + total);
+                            total += result.bytesRead;
+                            if (result.bytesRead < (buffers[i].byteLength || buffers[i].length)) break;
+                        }
+                        return { bytesRead: total, buffers: buffers };
+                    });
+                };
+                handle.readFile = function (options) {
+                    return Promise.resolve().then(function () {
+                        var state = getState();
+                        var data = state.isV8Snapshot ? Buffer.alloc(0) : decryptFullFile(state.path);
+                        if (!data) throw new Error('Decrypt Fail');
+                        return formatVirtualReadBuffer(data, options);
+                    });
+                };
+                handle.stat = function (options) {
+                    return Promise.resolve().then(function () {
+                        var state = getState();
+                        return makeStatObject(true, false, state.size, state.meta && state.meta.mtime, options);
+                    });
+                };
+                handle.createReadStream = function () {
+                    var state = getState();
+                    var data = state.isV8Snapshot ? Buffer.alloc(0) : decryptFullFile(state.path);
+                    if (!data) throw new Error('Decrypt Fail');
+                    return makeBufferReadStream(data);
+                };
+                handle.close = function () {
+                    return Promise.resolve().then(function () { deallocateVFD(fd); });
+                };
+                return handle;
+            }
+
             setFsHook('createReadStream', function (p, options) {
                 try {
                     var key = normalizePath(p);
-                    if (IndexTable[hashPath(key)]) {
+                    if (resolveVfsKey(key, 'file')) {
                         var fullData = decryptFullFile(key);
                         if (!fullData) throw new Error("Stream Decrypt Fail");
-
-                        // Create a Readable stream from the decrypted buffer
-                        var readableStream = new stream.Readable();
-                        readableStream.push(fullData);
-                        readableStream.push(null); // Signal EOF
-                        return readableStream;
+                        return makeBufferReadStream(fullData);
                     }
+                    if (isV8SnapshotFileKey(key)) return makeBufferReadStream(Buffer.alloc(0));
                 } catch (e) { }
                 return _fs_createReadStream_ref.fn.apply(this, arguments);
             }, _fs_createReadStream_ref);
@@ -13869,17 +14412,20 @@ function Loader() {
                             if (shouldBypassVFS(p)) return _fsp_readdir(p, options);
                             var vfsFiles = [];
                             var key = normalizePath(p);
-                            if (!key) return _fsp_readdir(p, options);
+                            if (key === null) return _fsp_readdir(p, options);
 
                             var resolvedDir = resolveVfsKey(key, 'dir');
+                            var v8DirKey = resolveV8SnapshotDirectoryKey(key);
+                            var directoryKey = resolvedDir || (v8DirKey !== null ? v8DirKey : key);
                             if (resolvedDir) vfsFiles = getVirtualDirChildren(resolvedDir);
+                            if (v8DirKey !== null) vfsFiles = mergeDirectoryChildNames(vfsFiles, getV8SnapshotDirectoryChildren(v8DirKey));
 
                             return _fsp_readdir(p, options)
                                 .then(function (diskFiles) {
                                     if (_usesWithFileTypes(options) && vfsFiles.length > 0) {
                                         return diskFiles.length > 0
-                                            ? _mergeVfsDirents(vfsFiles, diskFiles, resolvedDir, p, options)
-                                            : _makeVfsDirentArray(vfsFiles, resolvedDir, p, options);
+                                            ? _mergeVfsDirents(vfsFiles, diskFiles, directoryKey, p, options)
+                                            : _makeVfsDirentArray(vfsFiles, directoryKey, p, options);
                                     }
                                     if (vfsFiles.length > 0 && diskFiles.length > 0) {
                                         var m = {};
@@ -13892,10 +14438,10 @@ function Loader() {
                                 .catch(function () {
                                     if (vfsFiles.length > 0) {
                                         return _usesWithFileTypes(options)
-                                            ? _makeVfsDirentArray(vfsFiles, resolvedDir, p, options)
+                                            ? _makeVfsDirentArray(vfsFiles, directoryKey, p, options)
                                             : _makeNodeArray(vfsFiles.sort());
                                     }
-                                    if (resolveVfsKey(key, 'dir')) return new _nodeArray(0);
+                                    if (resolvedDir || v8DirKey !== null) return new _nodeArray(0);
                                     return _fsp_readdir(p, options);
                                 });
                         };
@@ -13915,9 +14461,11 @@ function Loader() {
                                 if (resolved) {
                                     var data = decryptFullFile(resolved);
                                     if (data) {
-                                        var enc = (options && typeof options === 'object') ? options.encoding : options;
-                                        return Promise.resolve(enc ? data.toString(enc) : data);
+                                        return Promise.resolve(formatVirtualReadBuffer(data, options));
                                     }
+                                }
+                                if (isV8SnapshotFileKey(key)) {
+                                    return Promise.resolve(formatVirtualReadBuffer(Buffer.alloc(0), options));
                                 }
                             } catch (e) { }
                             return _fsp_readFile(p, options);
@@ -13939,13 +14487,16 @@ function Loader() {
                                     var meta = resolveFileMetadata(rf);
                                     if (meta) {
                                         var mt = new Date(meta.mtime);
-                                        return Promise.resolve(makeStatObject(true, false, meta.origSize, mt));
+                                        return Promise.resolve(makeStatObject(true, false, meta.origSize, mt, options));
                                     }
                                 }
+                                if (isV8SnapshotFileKey(key)) {
+                                    return Promise.resolve(makeStatObject(true, false, 0, Date.now(), options));
+                                }
                                 var rd = resolveVfsKey(key, 'dir');
-                                if (rd) {
+                                if (rd || isV8SnapshotDirectoryKey(key)) {
                                     return _fsp_stat(p, options).catch(function () {
-                                        return makeStatObject(false, true, 0, new Date());
+                                        return makeStatObject(false, true, 0, Date.now(), options);
                                     });
                                 }
                             } catch (e) { }
@@ -13968,13 +14519,16 @@ function Loader() {
                                     var meta = resolveFileMetadata(rf);
                                     if (meta) {
                                         var mt = new Date(meta.mtime);
-                                        return Promise.resolve(makeStatObject(true, false, meta.origSize, mt));
+                                        return Promise.resolve(makeStatObject(true, false, meta.origSize, mt, options));
                                     }
                                 }
+                                if (isV8SnapshotFileKey(key)) {
+                                    return Promise.resolve(makeStatObject(true, false, 0, Date.now(), options));
+                                }
                                 var rd = resolveVfsKey(key, 'dir');
-                                if (rd) {
+                                if (rd || isV8SnapshotDirectoryKey(key)) {
                                     return _fsp_lstat(p, options).catch(function () {
-                                        return makeStatObject(false, true, 0, new Date());
+                                        return makeStatObject(false, true, 0, Date.now(), options);
                                     });
                                 }
                             } catch (e) { }
@@ -13992,13 +14546,70 @@ function Loader() {
                             if (shouldBypassVFS(p)) return _fsp_access(p, mode);
                             try {
                                 var key = normalizePath(p);
-                                if (resolveVfsKey(key, 'any')) return Promise.resolve(undefined);
+                                if (isVirtualOrV8Path(key)) return Promise.resolve(undefined);
                             } catch (e) { }
                             return _fsp_access(p, mode);
                         };
                     },
                     configurable: true, enumerable: true
                 });
+
+                // ── promises.realpath ─────────────────────────────────
+                var _fsp_realpath = fs.promises.realpath.bind(fs.promises);
+                Object.defineProperty(fs.promises, 'realpath', {
+                    get: function () {
+                        return function (p, options) {
+                            if (shouldBypassVFS(p)) return _fsp_realpath(p, options);
+                            try {
+                                var key = normalizePath(p);
+                                var virtualPath = key === null ? null : getVirtualAbsolutePath(key, options);
+                                if (virtualPath !== null) return Promise.resolve(virtualPath);
+                            } catch (e) { }
+                            return _fsp_realpath(p, options);
+                        };
+                    },
+                    configurable: true, enumerable: true
+                });
+
+                // ── promises.opendir ──────────────────────────────────
+                if (typeof fs.promises.opendir === 'function') {
+                    var _fsp_opendir = fs.promises.opendir.bind(fs.promises);
+                    Object.defineProperty(fs.promises, 'opendir', {
+                        get: function () {
+                            return function (p, options) {
+                                if (shouldBypassVFS(p)) return _fsp_opendir(p, options);
+                                try {
+                                    var key = normalizePath(p);
+                                    if (key !== null && (resolveVfsKey(key, 'dir') || isV8SnapshotDirectoryKey(key))) {
+                                        return Promise.resolve(makeVirtualDirObject(p, options));
+                                    }
+                                } catch (e) { }
+                                return _fsp_opendir(p, options);
+                            };
+                        },
+                        configurable: true, enumerable: true
+                    });
+                }
+
+                // ── promises.open / virtual FileHandle ────────────────
+                var _fsp_open = typeof fs.promises.open === 'function' ? fs.promises.open.bind(fs.promises) : null;
+                if (_fsp_open) {
+                    Object.defineProperty(fs.promises, 'open', {
+                        get: function () {
+                            return function (p, flags, mode) {
+                                if (shouldBypassVFS(p)) return _fsp_open(p, flags, mode);
+                                try {
+                                    var key = normalizePath(p);
+                                    var resolved = resolveVfsKey(key, 'file');
+                                    var fd = resolved ? allocateVFD(resolved) : (isV8SnapshotFileKey(key) ? allocateEmptyV8VFD(key) : null);
+                                    if (fd) return Promise.resolve(makeVirtualFileHandle(fd));
+                                } catch (e) { }
+                                return _fsp_open(p, flags, mode);
+                            };
+                        },
+                        configurable: true, enumerable: true
+                    });
+                }
             }
 
             // ══════════════════════════════════════════════════════════════
