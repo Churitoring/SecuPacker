@@ -8,6 +8,8 @@
 
 Un plugin de empaquetado de seguridad de recursos para RPG Maker MV / MZ.
 
+¡Compatibilidad verificada con más de 1.000 plugins!
+
 > **Solo para Windows.** No funciona en macOS ni Linux.
 
 ---

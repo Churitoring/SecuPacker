@@ -8,6 +8,8 @@
 
 Ein Ressourcen-Sicherheits-Pack-Plugin für RPG Maker MV / MZ.
 
+Kompatibilität mit über 1.000 Plugins erfolgreich geprüft!
+
 > **Nur für Windows.** Funktioniert nicht unter macOS oder Linux.
 
 ---

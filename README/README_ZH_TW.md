@@ -8,6 +8,8 @@
 
 適用於 RPG Maker MV / MZ 的資源安全封包插件。
 
+已驗證與 1,000 多個外掛的相容性！
+
 > **僅支援 Windows。** 不支援 macOS 和 Linux。
 
 ---

@@ -8,6 +8,8 @@
 
 Plugin di sicurezza per il confezionamento di risorse per RPG Maker MV / MZ.
 
+Compatibilità verificata con oltre 1.000 plugin!
+
 > **Solo Windows.** Non funziona su macOS o Linux.
 
 ---

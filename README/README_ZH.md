@@ -8,6 +8,8 @@
 
 适用于 RPG Maker MV / MZ 的资源安全打包插件。
 
+已验证与 1,000 多个插件的兼容性！
+
 > **仅支持 Windows。** 不支持 macOS 和 Linux。
 
 ---

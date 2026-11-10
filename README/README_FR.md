@@ -8,6 +8,8 @@
 
 Un plugin de compression sécurisée des ressources pour RPG Maker MV / MZ.
 
+Compatibilité vérifiée avec plus de 1 000 plugins !
+
 > **Windows uniquement.** Ne fonctionne pas sur macOS ni Linux.
 
 ---

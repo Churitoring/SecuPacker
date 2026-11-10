@@ -8,6 +8,8 @@
 
 Wtyczka do bezpiecznego pakowania zasobów dla RPG Maker MV / MZ.
 
+Zweryfikowano zgodność z ponad 1 000 wtyczkami!
+
 > **Tylko Windows.** Nie działa na macOS ani Linux.
 
 ---
